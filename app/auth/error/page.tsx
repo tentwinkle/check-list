@@ -28,10 +28,10 @@ export default function AuthErrorPage() {
           <CardDescription>{errorMessages[error] || errorMessages.Default}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Button asChild className="w-full">
+          <Button className="w-full">
             <Link href="/auth/signin">Try Again</Link>
           </Button>
-          <Button variant="outline" asChild className="w-full">
+          <Button variant="outline" className="w-full">
             <Link href="/">Go Home</Link>
           </Button>
         </CardContent>

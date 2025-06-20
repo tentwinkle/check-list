@@ -155,14 +155,11 @@ export function InspectorDashboard() {
                 </Button>
                 <Button
                   variant="outline"
-                  asChild
                   className="h-14 text-base font-semibold bg-white/80 backdrop-blur-sm hover:bg-white"
                 >
-                  <Link
-                    href="/inspector/inspections"
-                  >
+                  <Link href="/inspector/inspections">
                     <span className="flex items-center">
-                      {/* <Play className="mr-3 h-5 w-5" /> */}
+                      <Play className="mr-3 h-5 w-5" />
                       View All Inspections
                     </span>
                   </Link>
@@ -325,7 +322,6 @@ export function InspectorDashboard() {
                         <div className="mt-4 sm:mt-0 sm:ml-6 flex-shrink-0">
                           {inspection.status !== "COMPLETED" ? (
                             <Button
-                              asChild
                               size="lg"
                               className="w-full sm:w-auto"
                             >
@@ -333,7 +329,7 @@ export function InspectorDashboard() {
                                 href={`/inspector/inspection/${inspection.id}`}
                               >
                                 <span className="flex items-center">
-                                  {/* <Play className="mr-2 h-4 w-4" /> */}
+                                  <Play className="mr-2 h-4 w-4" />
                                   Start Inspection
                                 </span>
                               </Link>
@@ -341,7 +337,6 @@ export function InspectorDashboard() {
                           ) : (
                             <Button
                               variant="outline"
-                              asChild
                               size="lg"
                               className="w-full sm:w-auto bg-white/80 backdrop-blur-sm"
                             >
@@ -349,7 +344,7 @@ export function InspectorDashboard() {
                                 href={`/inspector/inspection/${inspection.id}`}
                               >
                                 <span className="flex items-center">
-                                  {/* <CheckCircle className="mr-2 h-4 w-4" /> */}
+                                  <CheckCircle className="mr-2 h-4 w-4" />
                                   View Report
                                 </span>
                               </Link>
@@ -364,13 +359,10 @@ export function InspectorDashboard() {
                     <div className="text-center pt-6">
                       <Button
                         variant="outline"
-                        asChild
                         size="lg"
                         className="bg-white/80 backdrop-blur-sm"
                       >
-                        <Link href="/inspector/inspections">
-                          <span>View All {inspections.length} Inspections</span>
-                        </Link>
+                        <Link href="/inspector/inspections"><span>View All {inspections.length} Inspections</span></Link>
                       </Button>
                     </div>
                   )}

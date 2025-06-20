@@ -1,87 +1,106 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { useSession } from "next-auth/react"
-import { Navigation } from "@/components/ui/navigation"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { StatusBadge } from "@/components/ui/status-badge"
-import { ArrowLeft, Search, Filter, Play, CheckCircle, Clock } from "lucide-react"
-import { getInspectionStatus, formatDate } from "@/lib/utils"
-import Link from "next/link"
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { Navigation } from "@/components/ui/navigation";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { StatusBadge } from "@/components/ui/status-badge";
+import {
+  ArrowLeft,
+  Search,
+  Filter,
+  Play,
+  CheckCircle,
+  Clock,
+} from "lucide-react";
+import { getInspectionStatus, formatDate } from "@/lib/utils";
+import Link from "next/link";
 
 interface InspectionInstance {
-  id: string
-  dueDate: string
-  status: string
-  completedAt?: string
+  id: string;
+  dueDate: string;
+  status: string;
+  completedAt?: string;
   masterTemplate: {
-    name: string
-    description?: string
-  }
+    name: string;
+    description?: string;
+  };
   department: {
-    name: string
-  }
+    name: string;
+  };
 }
 
 export function InspectionsList() {
-  const { data: session } = useSession()
-  const [inspections, setInspections] = useState<InspectionInstance[]>([])
-  const [filteredInspections, setFilteredInspections] = useState<InspectionInstance[]>([])
-  const [loading, setLoading] = useState(true)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState<string>("all")
+  const { data: session } = useSession();
+  const [inspections, setInspections] = useState<InspectionInstance[]>([]);
+  const [filteredInspections, setFilteredInspections] = useState<
+    InspectionInstance[]
+  >([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
 
   useEffect(() => {
-    fetchInspections()
-  }, [])
+    fetchInspections();
+  }, []);
 
   useEffect(() => {
-    filterInspections()
-  }, [inspections, searchTerm, statusFilter])
+    filterInspections();
+  }, [inspections, searchTerm, statusFilter]);
 
   const fetchInspections = async () => {
     try {
-      const response = await fetch("/api/inspector/inspections")
+      const response = await fetch("/api/inspector/inspections");
       if (response.ok) {
-        const data = await response.json()
-        setInspections(data)
+        const data = await response.json();
+        setInspections(data);
       }
     } catch (error) {
-      console.error("Failed to fetch inspections:", error)
+      console.error("Failed to fetch inspections:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const filterInspections = () => {
-    let filtered = inspections
+    let filtered = inspections;
 
     // Filter by search term
     if (searchTerm) {
       filtered = filtered.filter(
         (inspection) =>
-          inspection.masterTemplate.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          inspection.department.name.toLowerCase().includes(searchTerm.toLowerCase()),
-      )
+          inspection.masterTemplate.name
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          inspection.department.name
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase())
+      );
     }
 
     // Filter by status
     if (statusFilter !== "all") {
       filtered = filtered.filter((inspection) => {
         if (statusFilter === "completed") {
-          return inspection.status === "COMPLETED"
+          return inspection.status === "COMPLETED";
         } else {
-          const status = getInspectionStatus(new Date(inspection.dueDate))
-          return status === statusFilter
+          const status = getInspectionStatus(new Date(inspection.dueDate));
+          return status === statusFilter;
         }
-      })
+      });
     }
 
-    setFilteredInspections(filtered)
-  }
+    setFilteredInspections(filtered);
+  };
 
   const getStatusCounts = () => {
     const counts = {
@@ -90,23 +109,23 @@ export function InspectionsList() {
       "due-soon": 0,
       overdue: 0,
       completed: 0,
-    }
+    };
 
     inspections.forEach((inspection) => {
       if (inspection.status === "COMPLETED") {
-        counts.completed++
+        counts.completed++;
       } else {
-        const status = getInspectionStatus(new Date(inspection.dueDate))
-        if (status === "pending") counts.pending++
-        else if (status === "due-soon") counts["due-soon"]++
-        else if (status === "overdue") counts.overdue++
+        const status = getInspectionStatus(new Date(inspection.dueDate));
+        if (status === "pending") counts.pending++;
+        else if (status === "due-soon") counts["due-soon"]++;
+        else if (status === "overdue") counts.overdue++;
       }
-    })
+    });
 
-    return counts
-  }
+    return counts;
+  };
 
-  const statusCounts = getStatusCounts()
+  const statusCounts = getStatusCounts();
 
   if (loading) {
     return (
@@ -116,7 +135,7 @@ export function InspectionsList() {
           <div className="text-center">Loading inspections...</div>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -127,12 +146,21 @@ export function InspectionsList() {
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-center justify-between">
-            <Button variant="outline" asChild>
-              <Link href="/inspector" className="flex items-center"><span className="flex items-center"><ArrowLeft className="mr-2 h-4 w-4" /> Back to Dashboard</span></Link>
+            <Button variant="outline">
+              <Link href="/inspector" className="flex items-center">
+                <span className="flex items-center">
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back to Dashboard
+                </span>
+              </Link>
             </Button>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mt-4">All Inspections</h1>
-          <p className="text-gray-600">Manage and track your assigned inspections</p>
+          <h1 className="text-3xl font-bold text-gray-900 mt-4">
+            All Inspections
+          </h1>
+          <p className="text-gray-600">
+            Manage and track your assigned inspections
+          </p>
         </div>
 
         {/* Filters */}
@@ -162,11 +190,21 @@ export function InspectionsList() {
                     <SelectValue placeholder="Filter by status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All ({statusCounts.all})</SelectItem>
-                    <SelectItem value="pending">Pending ({statusCounts.pending})</SelectItem>
-                    <SelectItem value="due-soon">Due Soon ({statusCounts["due-soon"]})</SelectItem>
-                    <SelectItem value="overdue">Overdue ({statusCounts.overdue})</SelectItem>
-                    <SelectItem value="completed">Completed ({statusCounts.completed})</SelectItem>
+                    <SelectItem value="all">
+                      All ({statusCounts.all})
+                    </SelectItem>
+                    <SelectItem value="pending">
+                      Pending ({statusCounts.pending})
+                    </SelectItem>
+                    <SelectItem value="due-soon">
+                      Due Soon ({statusCounts["due-soon"]})
+                    </SelectItem>
+                    <SelectItem value="overdue">
+                      Overdue ({statusCounts.overdue})
+                    </SelectItem>
+                    <SelectItem value="completed">
+                      Completed ({statusCounts.completed})
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -189,17 +227,26 @@ export function InspectionsList() {
           ) : (
             filteredInspections.map((inspection) => {
               const status =
-                inspection.status === "COMPLETED" ? "completed" : getInspectionStatus(new Date(inspection.dueDate))
+                inspection.status === "COMPLETED"
+                  ? "completed"
+                  : getInspectionStatus(new Date(inspection.dueDate));
 
               return (
-                <Card key={inspection.id} className="hover:shadow-md transition-shadow">
+                <Card
+                  key={inspection.id}
+                  className="hover:shadow-md transition-shadow"
+                >
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
                         <div className="flex items-start justify-between mb-2">
                           <div>
-                            <h3 className="text-lg font-semibold text-gray-900">{inspection.masterTemplate.name}</h3>
-                            <p className="text-sm text-gray-600">{inspection.department.name}</p>
+                            <h3 className="text-lg font-semibold text-gray-900">
+                              {inspection.masterTemplate.name}
+                            </h3>
+                            <p className="text-sm text-gray-600">
+                              {inspection.department.name}
+                            </p>
                           </div>
                           <StatusBadge status={status} />
                         </div>
@@ -212,35 +259,52 @@ export function InspectionsList() {
                           {inspection.completedAt && (
                             <div className="flex items-center gap-1">
                               <CheckCircle className="h-4 w-4" />
-                              Completed: {formatDate(new Date(inspection.completedAt))}
+                              Completed:{" "}
+                              {formatDate(new Date(inspection.completedAt))}
                             </div>
                           )}
                         </div>
 
                         {inspection.masterTemplate.description && (
-                          <p className="text-sm text-gray-600 mt-2">{inspection.masterTemplate.description}</p>
+                          <p className="text-sm text-gray-600 mt-2">
+                            {inspection.masterTemplate.description}
+                          </p>
                         )}
                       </div>
 
                       <div className="ml-4">
                         {inspection.status !== "COMPLETED" ? (
-                          <Button asChild>
-                            <Link href={`/inspector/inspection/${inspection.id}`} className="flex items-center"><span className="flex items-center"><Play className="mr-2 h-4 w-4" /> Start</span></Link>
+                          <Button>
+                            <Link
+                              href={`/inspector/inspection/${inspection.id}`}
+                              className="flex items-center"
+                            >
+                              <span className="flex items-center">
+                                <Play className="mr-2 h-4 w-4" /> Start
+                              </span>
+                            </Link>
                           </Button>
                         ) : (
-                          <Button variant="outline" asChild>
-                            <Link href={`/inspector/inspection/${inspection.id}`} className="flex items-center"><span className="flex items-center">View Report</span></Link>
+                          <Button variant="outline">
+                            <Link
+                              href={`/inspector/inspection/${inspection.id}`}
+                              className="flex items-center"
+                            >
+                              <span className="flex items-center">
+                                View Report
+                              </span>
+                            </Link>
                           </Button>
                         )}
                       </div>
                     </div>
                   </CardContent>
                 </Card>
-              )
+              );
             })
           )}
         </div>
       </div>
     </div>
-  )
+  );
 }

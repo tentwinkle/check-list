@@ -1,4 +1,4 @@
-import type { NextAuthOptions } from "next-auth";
+import type { NextAuthOptions } from "next-auth"
 import { PrismaAdapter } from "@next-auth/prisma-adapter"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { prisma } from "./prisma"
@@ -48,6 +48,7 @@ export const authOptions: NextAuthOptions = {
           organizationId: user.organizationId,
           areaId: user.areaId,
           departmentId: user.departmentId,
+          profileImage: user.profileImage,
         }
       },
     }),
@@ -57,13 +58,22 @@ export const authOptions: NextAuthOptions = {
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.role = user.role
         token.organizationId = user.organizationId
         token.areaId = user.areaId
         token.departmentId = user.departmentId
+        token.profileImage = user.profileImage
       }
+
+      // Handle session updates
+      if (trigger === "update" && session) {
+        token.name = session.user.name
+        token.email = session.user.email
+        token.profileImage = session.user.profileImage
+      }
+
       return token
     },
     async session({ session, token }) {
@@ -73,6 +83,7 @@ export const authOptions: NextAuthOptions = {
         session.user.organizationId = token.organizationId as string
         session.user.areaId = token.areaId as string
         session.user.departmentId = token.departmentId as string
+        session.user.profileImage = token.profileImage as string
       }
       return session
     },
