@@ -1,0 +1,154 @@
+import { type NextRequest, NextResponse } from "next/server"
+import { getServerSession } from "next-auth/next"
+import { authOptions } from "@/lib/auth"
+import type { Session } from "next-auth"
+import { prisma } from "@/lib/prisma"
+import { sendPasswordResetEmail, sendWelcomeEmail } from "@/lib/email"
+import { generateResetToken } from "@/lib/utils"
+import bcrypt from "bcryptjs"
+
+export async function GET() {
+  try {
+    const session: Session | null = await getServerSession(authOptions)
+
+    if (!session || session.user.role !== "ADMIN") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const organizationId = session.user.organizationId
+
+    if (!organizationId) {
+      return NextResponse.json({ error: "Organization not found" }, { status: 400 })
+    }
+
+    const users = await prisma.user.findMany({
+      where: { organizationId },
+      include: {
+        area: {
+          select: {
+            name: true,
+          },
+        },
+        department: {
+          select: {
+            name: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    })
+
+    return NextResponse.json(users)
+  } catch (error) {
+    console.error("Error fetching users:", error)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const session: Session | null = await getServerSession(authOptions)
+
+    if (!session || session.user.role !== "ADMIN") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const organizationId = session.user.organizationId
+
+    if (!organizationId) {
+      return NextResponse.json({ error: "Organization not found" }, { status: 400 })
+    }
+
+    const { name, email, role, areaId, departmentId } = await request.json()
+
+    // Check if email already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+    })
+
+    if (existingUser) {
+      return NextResponse.json({ error: "Email already exists" }, { status: 400 })
+    }
+
+    // Verify area and department belong to the organization
+    if (areaId && areaId !== "NONE" && areaId !== "") {
+      const area = await prisma.area.findFirst({
+        where: {
+          id: areaId,
+          organizationId,
+        },
+      })
+
+      if (!area) {
+        return NextResponse.json({ error: "Invalid area" }, { status: 400 })
+      }
+    }
+
+    if (departmentId && departmentId !== "NONE" && departmentId !== "") {
+      const department = await prisma.department.findFirst({
+        where: {
+          id: departmentId,
+          organizationId,
+        },
+      })
+
+      if (!department) {
+        return NextResponse.json({ error: "Invalid department" }, { status: 400 })
+      }
+    }
+
+    // Create user in a transaction
+    const result = await prisma.$transaction(async (tx) => {
+      // Generate temporary password and reset token
+      const tempPassword = Math.random().toString(36).slice(-8)
+      const hashedPassword = await bcrypt.hash(tempPassword, 12)
+      const resetToken = generateResetToken()
+
+      // Create user
+      const user = await tx.user.create({
+        data: {
+          name,
+          email,
+          password: hashedPassword,
+          role: role as any,
+          organizationId,
+          areaId: areaId === "NONE" || areaId === "" ? null : areaId,
+          departmentId: departmentId === "NONE" || departmentId === "" ? null : departmentId,
+        },
+      })
+
+      // Store reset token
+      await tx.verificationToken.create({
+        data: {
+          identifier: email,
+          token: resetToken,
+          expires: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
+        },
+      })
+
+      return { user, resetToken }
+    })
+
+    // Get organization name for email
+    const organization = await prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { name: true },
+    })
+
+    // Send welcome email and password reset email
+    await Promise.all([
+      sendWelcomeEmail(email, name, role, organization?.name || "Organization"),
+      sendPasswordResetEmail(email, result.resetToken),
+    ])
+
+    return NextResponse.json({
+      message: "User created successfully",
+      user: result.user,
+    })
+  } catch (error) {
+    console.error("Error creating user:", error)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+  }
+}

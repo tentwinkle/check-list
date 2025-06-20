@@ -1,0 +1,218 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  role          UserRole  @default(INSPECTOR)
+  organizationId String?
+  areaId        String?
+  departmentId  String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts      Account[]
+  sessions      Session[]
+  organization  Organization? @relation(fields: [organizationId], references: [id])
+  area          Area?         @relation(fields: [areaId], references: [id])
+  department    Department?   @relation(fields: [departmentId], references: [id])
+  inspections   InspectionInstance[]
+  followUps     FollowUp[]
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Organization {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users       User[]
+  areas       Area[]
+  departments Department[]
+  templates   MasterTemplate[]
+}
+
+model Area {
+  id             String   @id @default(cuid())
+  name           String
+  description    String?
+  organizationId String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  users        User[]
+  departments  Department[]
+}
+
+model Department {
+  id             String   @id @default(cuid())
+  name           String
+  description    String?
+  organizationId String
+  areaId         String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  area         Area?        @relation(fields: [areaId], references: [id])
+  users        User[]
+  templates    MasterTemplate[]
+  inspections  InspectionInstance[]
+}
+
+model MasterTemplate {
+  id             String            @id @default(cuid())
+  name           String
+  description    String?
+  frequency      Int               // Days between inspections
+  organizationId String
+  departmentId   String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  organization    Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  department      Department?        @relation(fields: [departmentId], references: [id])
+  checklistItems  ChecklistItem[]
+  inspections     InspectionInstance[]
+}
+
+model ChecklistItem {
+  id               String   @id @default(cuid())
+  name             String
+  description      String?
+  location         String?
+  qrCodeId         String   @unique
+  masterTemplateId String
+  order            Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  masterTemplate MasterTemplate    @relation(fields: [masterTemplateId], references: [id], onDelete: Cascade)
+  reportItems    ReportItemResult[]
+}
+
+model InspectionInstance {
+  id               String            @id @default(cuid())
+  masterTemplateId String
+  inspectorId      String
+  departmentId     String
+  status           InspectionStatus  @default(PENDING)
+  dueDate          DateTime
+  completedAt      DateTime?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  masterTemplate MasterTemplate     @relation(fields: [masterTemplateId], references: [id])
+  inspector      User               @relation(fields: [inspectorId], references: [id])
+  department     Department         @relation(fields: [departmentId], references: [id])
+  report         InspectionReport?
+}
+
+model InspectionReport {
+  id                   String   @id @default(cuid())
+  inspectionInstanceId String   @unique
+  pdfUrl               String?
+  locked               Boolean  @default(false)
+  submittedAt          DateTime @default(now())
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  inspectionInstance InspectionInstance @relation(fields: [inspectionInstanceId], references: [id], onDelete: Cascade)
+  reportItems        ReportItemResult[]
+  followUps          FollowUp[]
+}
+
+model ReportItemResult {
+  id                String   @id @default(cuid())
+  checklistItemId   String
+  inspectionReportId String
+  approved          Boolean
+  comments          String?
+  imageUrl          String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  checklistItem     ChecklistItem    @relation(fields: [checklistItemId], references: [id])
+  inspectionReport  InspectionReport @relation(fields: [inspectionReportId], references: [id], onDelete: Cascade)
+
+  @@unique([checklistItemId, inspectionReportId])
+}
+
+model FollowUp {
+  id                 String   @id @default(cuid())
+  inspectionReportId String
+  userId             String
+  note               String
+  handled            Boolean  @default(false)
+  handledAt          DateTime?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  inspectionReport InspectionReport @relation(fields: [inspectionReportId], references: [id], onDelete: Cascade)
+  user             User             @relation(fields: [userId], references: [id])
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  MINI_ADMIN
+  INSPECTOR
+}
+
+enum InspectionStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  OVERDUE
+}

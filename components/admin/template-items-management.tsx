@@ -1,0 +1,66 @@
+"use client"
+
+import { useState } from "react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Plus, QrCode } from "lucide-react"
+import { CreateTemplateItemDialog } from "./create-template-item-dialog"
+import { TemplateItemsList } from "./template-items-list"
+import { QRCodeDialog } from "./qr-code-dialog"
+
+interface TemplateItemsManagementProps {
+  templateId: string
+  templateName: string
+  onUpdate: () => void
+}
+
+export function TemplateItemsManagement({ templateId, templateName, onUpdate }: TemplateItemsManagementProps) {
+  const [showCreateDialog, setShowCreateDialog] = useState(false)
+  const [showQRDialog, setShowQRDialog] = useState(false)
+  const [selectedItem, setSelectedItem] = useState<any>(null)
+
+  const handleShowQR = (item: any) => {
+    setSelectedItem(item)
+    setShowQRDialog(true)
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle>Template Items - {templateName}</CardTitle>
+            <CardDescription>Manage checklist items for this inspection template</CardDescription>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setShowQRDialog(true)}>
+              <QrCode className="mr-2 h-4 w-4" />
+              View QR Codes
+            </Button>
+            <Button onClick={() => setShowCreateDialog(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Item
+            </Button>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <TemplateItemsList templateId={templateId} onUpdate={onUpdate} onShowQR={handleShowQR} />
+      </CardContent>
+
+      <CreateTemplateItemDialog
+        open={showCreateDialog}
+        onOpenChange={setShowCreateDialog}
+        onSuccess={onUpdate}
+        templateId={templateId}
+      />
+
+      <QRCodeDialog
+        open={showQRDialog}
+        onOpenChange={setShowQRDialog}
+        templateId={templateId}
+        selectedItem={selectedItem}
+      />
+    </Card>
+  )
+}
