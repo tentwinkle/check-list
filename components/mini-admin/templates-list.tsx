@@ -165,9 +165,11 @@ export function TemplatesList({ onUpdate }: TemplatesListProps) {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem asChild>
-                      <Link href={`/mini-admin/templates/${template.id}/items`}>
-                        <Eye className="mr-2 h-4 w-4" />
-                        Manage Items
+                      <Link href={`/mini-admin/templates/${template.id}/items`} className="flex items-center">
+                        <span className="flex items-center">
+                          <Eye className="mr-2 h-4 w-4" />
+                          Manage Items
+                        </span>
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleEdit(template)}>

@@ -128,10 +128,7 @@ export function InspectionsList() {
         <div className="mb-6">
           <div className="flex items-center justify-between">
             <Button variant="outline" asChild>
-              <Link href="/inspector">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Dashboard
-              </Link>
+              <Link href="/inspector" className="flex items-center"><span className="flex items-center"><ArrowLeft className="mr-2 h-4 w-4" /> Back to Dashboard</span></Link>
             </Button>
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mt-4">All Inspections</h1>
@@ -228,14 +225,11 @@ export function InspectionsList() {
                       <div className="ml-4">
                         {inspection.status !== "COMPLETED" ? (
                           <Button asChild>
-                            <Link href={`/inspector/inspection/${inspection.id}`}>
-                              <Play className="mr-2 h-4 w-4" />
-                              Start
-                            </Link>
+                            <Link href={`/inspector/inspection/${inspection.id}`} className="flex items-center"><span className="flex items-center"><Play className="mr-2 h-4 w-4" /> Start</span></Link>
                           </Button>
                         ) : (
                           <Button variant="outline" asChild>
-                            <Link href={`/inspector/inspection/${inspection.id}`}>View Report</Link>
+                            <Link href={`/inspector/inspection/${inspection.id}`} className="flex items-center"><span className="flex items-center">View Report</span></Link>
                           </Button>
                         )}
                       </div>

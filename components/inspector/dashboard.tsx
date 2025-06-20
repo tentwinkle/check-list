@@ -1,54 +1,60 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { useSession } from "next-auth/react"
-import { Navigation } from "@/components/ui/navigation"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { StatusBadge } from "@/components/ui/status-badge"
-import { QrCode, Play, Clock, CheckCircle, Zap, Target } from "lucide-react"
-import { getInspectionStatus, formatDate } from "@/lib/utils"
-import Link from "next/link"
-import { QRScanner } from "@/components/inspector/qr-scanner"
-import { ClipboardList } from "lucide-react"
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { Navigation } from "@/components/ui/navigation";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { QrCode, Play, Clock, CheckCircle, Zap, Target } from "lucide-react";
+import { getInspectionStatus, formatDate } from "@/lib/utils";
+import Link from "next/link";
+import { QRScanner } from "@/components/inspector/qr-scanner";
+import { ClipboardList } from "lucide-react";
 
 interface InspectionInstance {
-  id: string
-  dueDate: string
-  status: string
-  completedAt?: string
+  id: string;
+  dueDate: string;
+  status: string;
+  completedAt?: string;
   masterTemplate: {
-    name: string
-    description?: string
-  }
+    name: string;
+    description?: string;
+  };
   department: {
-    name: string
-  }
+    name: string;
+  };
 }
 
 export function InspectorDashboard() {
-  const { data: session } = useSession()
-  const [inspections, setInspections] = useState<InspectionInstance[]>([])
-  const [loading, setLoading] = useState(true)
-  const [showQRScanner, setShowQRScanner] = useState(false)
+  const { data: session } = useSession();
+  const [inspections, setInspections] = useState<InspectionInstance[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showQRScanner, setShowQRScanner] = useState(false);
 
   useEffect(() => {
-    fetchInspections()
-  }, [])
+    fetchInspections();
+  }, []);
 
   const fetchInspections = async () => {
     try {
-      const response = await fetch("/api/inspector/inspections")
+      const response = await fetch("/api/inspector/inspections");
       if (response.ok) {
-        const data = await response.json()
-        setInspections(data)
+        const data = await response.json();
+        setInspections(data);
       }
     } catch (error) {
-      console.error("Failed to fetch inspections:", error)
+      console.error("Failed to fetch inspections:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const getStatusCounts = () => {
     const counts = {
@@ -56,31 +62,31 @@ export function InspectorDashboard() {
       dueSoon: 0,
       overdue: 0,
       completed: 0,
-    }
+    };
 
     inspections.forEach((inspection) => {
       if (inspection.status === "COMPLETED") {
-        counts.completed++
+        counts.completed++;
       } else {
-        const status = getInspectionStatus(new Date(inspection.dueDate))
+        const status = getInspectionStatus(new Date(inspection.dueDate));
         switch (status) {
           case "pending":
-            counts.pending++
-            break
+            counts.pending++;
+            break;
           case "due-soon":
-            counts.dueSoon++
-            break
+            counts.dueSoon++;
+            break;
           case "overdue":
-            counts.overdue++
-            break
+            counts.overdue++;
+            break;
         }
       }
-    })
+    });
 
-    return counts
-  }
+    return counts;
+  };
 
-  const statusCounts = getStatusCounts()
+  const statusCounts = getStatusCounts();
 
   if (loading) {
     return (
@@ -97,7 +103,7 @@ export function InspectorDashboard() {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -133,7 +139,9 @@ export function InspectorDashboard() {
                 <Zap className="h-5 w-5" />
                 Quick Actions
               </CardTitle>
-              <CardDescription className="text-blue-100">Start your inspection workflow</CardDescription>
+              <CardDescription className="text-blue-100">
+                Start your inspection workflow
+              </CardDescription>
             </CardHeader>
             <CardContent className="p-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -150,9 +158,13 @@ export function InspectorDashboard() {
                   asChild
                   className="h-14 text-base font-semibold bg-white/80 backdrop-blur-sm hover:bg-white"
                 >
-                  <Link href="/inspector/inspections">
-                    <Play className="mr-3 h-5 w-5" />
-                    <span>View All Inspections</span>
+                  <Link
+                    href="/inspector/inspections"
+                  >
+                    <span className="flex items-center">
+                      {/* <Play className="mr-3 h-5 w-5" /> */}
+                      View All Inspections
+                    </span>
                   </Link>
                 </Button>
               </div>
@@ -170,11 +182,15 @@ export function InspectorDashboard() {
             className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200 hover:scale-105 transition-all duration-300"
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-blue-700">Pending</CardTitle>
+              <CardTitle className="text-sm font-medium text-blue-700">
+                Pending
+              </CardTitle>
               <Clock className="h-5 w-5 text-blue-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-blue-800">{statusCounts.pending}</div>
+              <div className="text-2xl font-bold text-blue-800">
+                {statusCounts.pending}
+              </div>
               <p className="text-xs text-blue-600 mt-1">Not due yet</p>
             </CardContent>
           </Card>
@@ -184,11 +200,15 @@ export function InspectorDashboard() {
             className="bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200 hover:scale-105 transition-all duration-300"
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-amber-700">Due Soon</CardTitle>
+              <CardTitle className="text-sm font-medium text-amber-700">
+                Due Soon
+              </CardTitle>
               <Clock className="h-5 w-5 text-amber-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-amber-800">{statusCounts.dueSoon}</div>
+              <div className="text-2xl font-bold text-amber-800">
+                {statusCounts.dueSoon}
+              </div>
               <p className="text-xs text-amber-600 mt-1">Within 3 days</p>
             </CardContent>
           </Card>
@@ -198,11 +218,15 @@ export function InspectorDashboard() {
             className="bg-gradient-to-br from-red-50 to-pink-50 border-red-200 hover:scale-105 transition-all duration-300"
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-red-700">Overdue</CardTitle>
+              <CardTitle className="text-sm font-medium text-red-700">
+                Overdue
+              </CardTitle>
               <Clock className="h-5 w-5 text-red-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-red-800">{statusCounts.overdue}</div>
+              <div className="text-2xl font-bold text-red-800">
+                {statusCounts.overdue}
+              </div>
               <p className="text-xs text-red-600 mt-1">Past due</p>
             </CardContent>
           </Card>
@@ -212,11 +236,15 @@ export function InspectorDashboard() {
             className="bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-200 hover:scale-105 transition-all duration-300"
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-emerald-700">Completed</CardTitle>
+              <CardTitle className="text-sm font-medium text-emerald-700">
+                Completed
+              </CardTitle>
               <CheckCircle className="h-5 w-5 text-emerald-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-emerald-800">{statusCounts.completed}</div>
+              <div className="text-2xl font-bold text-emerald-800">
+                {statusCounts.completed}
+              </div>
               <p className="text-xs text-emerald-600 mt-1">Finished</p>
             </CardContent>
           </Card>
@@ -226,8 +254,12 @@ export function InspectorDashboard() {
         <div className="animate-slide-up" style={{ animationDelay: "0.4s" }}>
           <Card variant="glass">
             <CardHeader>
-              <CardTitle className="text-xl sm:text-2xl">Recent Inspections</CardTitle>
-              <CardDescription>Your assigned inspections and their current status</CardDescription>
+              <CardTitle className="text-xl sm:text-2xl">
+                Recent Inspections
+              </CardTitle>
+              <CardDescription>
+                Your assigned inspections and their current status
+              </CardDescription>
             </CardHeader>
             <CardContent>
               {inspections.length === 0 ? (
@@ -235,8 +267,12 @@ export function InspectorDashboard() {
                   <div className="w-16 h-16 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <ClipboardList className="h-8 w-8 text-blue-600" />
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No inspections assigned yet</h3>
-                  <p className="text-gray-600">Check back later or contact your supervisor for assignments.</p>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    No inspections assigned yet
+                  </h3>
+                  <p className="text-gray-600">
+                    Check back later or contact your supervisor for assignments.
+                  </p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -244,7 +280,7 @@ export function InspectorDashboard() {
                     const status =
                       inspection.status === "COMPLETED"
                         ? "completed"
-                        : getInspectionStatus(new Date(inspection.dueDate))
+                        : getInspectionStatus(new Date(inspection.dueDate));
 
                     return (
                       <div
@@ -258,7 +294,9 @@ export function InspectorDashboard() {
                               <h3 className="font-semibold text-gray-900 text-base sm:text-lg">
                                 {inspection.masterTemplate.name}
                               </h3>
-                              <p className="text-sm text-gray-600">{inspection.department.name}</p>
+                              <p className="text-sm text-gray-600">
+                                {inspection.department.name}
+                              </p>
                             </div>
                             <StatusBadge status={status} />
                           </div>
@@ -271,7 +309,8 @@ export function InspectorDashboard() {
                             {inspection.completedAt && (
                               <div className="flex items-center gap-1">
                                 <CheckCircle className="h-4 w-4" />
-                                Completed: {formatDate(new Date(inspection.completedAt))}
+                                Completed:{" "}
+                                {formatDate(new Date(inspection.completedAt))}
                               </div>
                             )}
                           </div>
@@ -285,10 +324,18 @@ export function InspectorDashboard() {
 
                         <div className="mt-4 sm:mt-0 sm:ml-6 flex-shrink-0">
                           {inspection.status !== "COMPLETED" ? (
-                            <Button asChild size="lg" className="w-full sm:w-auto">
-                              <Link href={`/inspector/inspection/${inspection.id}`}>
-                                <Play className="mr-2 h-4 w-4" />
-                                <span>Start Inspection</span>
+                            <Button
+                              asChild
+                              size="lg"
+                              className="w-full sm:w-auto"
+                            >
+                              <Link
+                                href={`/inspector/inspection/${inspection.id}`}
+                              >
+                                <span className="flex items-center">
+                                  {/* <Play className="mr-2 h-4 w-4" /> */}
+                                  Start Inspection
+                                </span>
                               </Link>
                             </Button>
                           ) : (
@@ -298,20 +345,29 @@ export function InspectorDashboard() {
                               size="lg"
                               className="w-full sm:w-auto bg-white/80 backdrop-blur-sm"
                             >
-                              <Link href={`/inspector/inspection/${inspection.id}`}>
-                                <CheckCircle className="mr-2 h-4 w-4" />
-                                <span>View Report</span>
+                              <Link
+                                href={`/inspector/inspection/${inspection.id}`}
+                              >
+                                <span className="flex items-center">
+                                  {/* <CheckCircle className="mr-2 h-4 w-4" /> */}
+                                  View Report
+                                </span>
                               </Link>
                             </Button>
                           )}
                         </div>
                       </div>
-                    )
+                    );
                   })}
 
                   {inspections.length > 10 && (
                     <div className="text-center pt-6">
-                      <Button variant="outline" asChild size="lg" className="bg-white/80 backdrop-blur-sm">
+                      <Button
+                        variant="outline"
+                        asChild
+                        size="lg"
+                        className="bg-white/80 backdrop-blur-sm"
+                      >
                         <Link href="/inspector/inspections">
                           <span>View All {inspections.length} Inspections</span>
                         </Link>
@@ -324,8 +380,11 @@ export function InspectorDashboard() {
           </Card>
         </div>
 
-        <QRScanner open={showQRScanner} onClose={() => setShowQRScanner(false)} />
+        <QRScanner
+          open={showQRScanner}
+          onClose={() => setShowQRScanner(false)}
+        />
       </div>
     </div>
-  )
+  );
 }

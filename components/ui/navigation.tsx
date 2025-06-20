@@ -65,11 +65,13 @@ export function Navigation() {
           {/* Logo */}
           <div className="flex items-center">
             <Link href="/" className="flex items-center space-x-2 group">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300">
-                <span className="text-white font-bold text-sm">IS</span>
-              </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent hidden sm:block">
-                Inspection System
+              <span className="flex items-center space-x-2">
+                <span className="w-8 h-8 bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300">
+                  <span className="text-white font-bold text-sm">IS</span>
+                </span>
+                <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent hidden sm:block">
+                  Inspection System
+                </span>
               </span>
             </Link>
           </div>
@@ -88,7 +90,7 @@ export function Navigation() {
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="relative h-10 w-10 rounded-full glass hover:shadow-lg transition-all duration-300"
+                  className="relative p-0 rounded-full glass hover:shadow-lg transition-all duration-300"
                 >
                   <Avatar className="h-10 w-10 ring-2 ring-white/20">
                     <AvatarFallback className="bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold">
@@ -98,7 +100,7 @@ export function Navigation() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-64 glass border-white/20 shadow-xl" align="end" forceMount>
-                <div className="flex items-center justify-start gap-3 p-4">
+                <div className="flex items-center justify-start gap-3">
                   <Avatar className="h-12 w-12 ring-2 ring-white/20">
                     <AvatarFallback className="bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold">
                       {getInitials(session.user.name || session.user.email)}
@@ -112,14 +114,18 @@ export function Navigation() {
                 <DropdownMenuSeparator className="bg-white/20" />
                 <DropdownMenuItem asChild className="cursor-pointer hover:bg-white/10 transition-colors">
                   <Link href="/profile" className="flex items-center">
-                    <User className="mr-3 h-4 w-4" />
-                    Profile
+                    <span className="flex items-center">
+                      <User className="mr-3 h-4 w-4" />
+                      Profile
+                    </span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild className="cursor-pointer hover:bg-white/10 transition-colors">
                   <Link href="/settings" className="flex items-center">
-                    <Settings className="mr-3 h-4 w-4" />
-                    Settings
+                    <span className="flex items-center">
+                      <Settings className="mr-3 h-4 w-4" />
+                      Settings
+                    </span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator className="bg-white/20" />
@@ -173,8 +179,10 @@ export function Navigation() {
                 className="flex items-center px-3 py-2 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-white/10 transition-colors"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                <User className="mr-3 h-4 w-4" />
-                Profile
+                <span className="flex items-center">
+                  <User className="mr-3 h-4 w-4" />
+                  Profile
+                </span>
               </Link>
 
               <Link
@@ -182,8 +190,10 @@ export function Navigation() {
                 className="flex items-center px-3 py-2 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-white/10 transition-colors"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                <Settings className="mr-3 h-4 w-4" />
-                Settings
+                <span className="flex items-center">
+                  <Settings className="mr-3 h-4 w-4" />
+                  Settings
+                </span>
               </Link>
 
               <button
