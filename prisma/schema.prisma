@@ -39,26 +39,27 @@ model Session {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String    @unique
-  emailVerified DateTime?
-  image         String?
-  password      String?
-  role          UserRole  @default(INSPECTOR)
+  id             String    @id @default(cuid())
+  name           String?
+  email          String    @unique
+  emailVerified  DateTime?
+  image          String?
+  password       String?
+  role           UserRole  @default(INSPECTOR)
   organizationId String?
-  areaId        String?
-  departmentId  String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  areaId         String?
+  departmentId   String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
-  accounts      Account[]
-  sessions      Session[]
-  organization  Organization? @relation(fields: [organizationId], references: [id])
-  area          Area?         @relation(fields: [areaId], references: [id])
-  department    Department?   @relation(fields: [departmentId], references: [id])
-  inspections   InspectionInstance[]
-  followUps     FollowUp[]
+  accounts     Account[]
+  sessions     Session[]
+  organization Organization?        @relation(fields: [organizationId], references: [id])
+  area         Area?                @relation(fields: [areaId], references: [id])
+  department   Department?          @relation(fields: [departmentId], references: [id])
+  inspections  InspectionInstance[]
+  followUps    FollowUp[]
+  auditLogs    AuditLog[]
 }
 
 model VerificationToken {
@@ -104,27 +105,27 @@ model Department {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  area         Area?        @relation(fields: [areaId], references: [id])
+  organization Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  area         Area?                @relation(fields: [areaId], references: [id])
   users        User[]
   templates    MasterTemplate[]
   inspections  InspectionInstance[]
 }
 
 model MasterTemplate {
-  id             String            @id @default(cuid())
+  id             String   @id @default(cuid())
   name           String
   description    String?
-  frequency      Int               // Days between inspections
+  frequency      Int // Days between inspections
   organizationId String
   departmentId   String?
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  organization    Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  department      Department?        @relation(fields: [departmentId], references: [id])
-  checklistItems  ChecklistItem[]
-  inspections     InspectionInstance[]
+  organization   Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  department     Department?          @relation(fields: [departmentId], references: [id])
+  checklistItems ChecklistItem[]
+  inspections    InspectionInstance[]
 }
 
 model ChecklistItem {
@@ -138,24 +139,24 @@ model ChecklistItem {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
-  masterTemplate MasterTemplate    @relation(fields: [masterTemplateId], references: [id], onDelete: Cascade)
+  masterTemplate MasterTemplate     @relation(fields: [masterTemplateId], references: [id], onDelete: Cascade)
   reportItems    ReportItemResult[]
 }
 
 model InspectionInstance {
-  id               String            @id @default(cuid())
+  id               String           @id @default(cuid())
   masterTemplateId String
   inspectorId      String
   departmentId     String
-  status           InspectionStatus  @default(PENDING)
+  status           InspectionStatus @default(PENDING)
   dueDate          DateTime
   completedAt      DateTime?
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
 
-  masterTemplate MasterTemplate     @relation(fields: [masterTemplateId], references: [id])
-  inspector      User               @relation(fields: [inspectorId], references: [id])
-  department     Department         @relation(fields: [departmentId], references: [id])
+  masterTemplate MasterTemplate    @relation(fields: [masterTemplateId], references: [id])
+  inspector      User              @relation(fields: [inspectorId], references: [id])
+  department     Department        @relation(fields: [departmentId], references: [id])
   report         InspectionReport?
 }
 
@@ -174,33 +175,44 @@ model InspectionReport {
 }
 
 model ReportItemResult {
-  id                String   @id @default(cuid())
-  checklistItemId   String
+  id                 String   @id @default(cuid())
+  checklistItemId    String
   inspectionReportId String
-  approved          Boolean
-  comments          String?
-  imageUrl          String?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  approved           Boolean
+  comments           String?
+  imageUrl           String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
-  checklistItem     ChecklistItem    @relation(fields: [checklistItemId], references: [id])
-  inspectionReport  InspectionReport @relation(fields: [inspectionReportId], references: [id], onDelete: Cascade)
+  checklistItem    ChecklistItem    @relation(fields: [checklistItemId], references: [id])
+  inspectionReport InspectionReport @relation(fields: [inspectionReportId], references: [id], onDelete: Cascade)
 
   @@unique([checklistItemId, inspectionReportId])
 }
 
 model FollowUp {
-  id                 String   @id @default(cuid())
+  id                 String    @id @default(cuid())
   inspectionReportId String
   userId             String
   note               String
-  handled            Boolean  @default(false)
+  handled            Boolean   @default(false)
   handledAt          DateTime?
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
   inspectionReport InspectionReport @relation(fields: [inspectionReportId], references: [id], onDelete: Cascade)
   user             User             @relation(fields: [userId], references: [id])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String
+  entity    String
+  entityId  String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 enum UserRole {

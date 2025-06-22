@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import type { Session } from "next-auth"
 import { prisma } from "@/lib/prisma"
+import { createAuditLog } from "@/lib/audit"
 
 export async function GET() {
   try {
@@ -84,6 +85,8 @@ export async function POST(request: NextRequest) {
         departmentId: departmentId === "none" || departmentId === "" ? null : departmentId,
       },
     })
+
+    await createAuditLog(session.user.id, "CREATE_TEMPLATE", "Template", template.id)
 
     return NextResponse.json({
       message: "Template created successfully",

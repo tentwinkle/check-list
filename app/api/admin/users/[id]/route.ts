@@ -3,6 +3,9 @@ import { getServerSession } from "next-auth/next"
 import type { Session } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { sendEmailUpdateNotification } from "@/lib/email"
+import { generateResetToken } from "@/lib/utils"
+import { createAuditLog } from "@/lib/audit"
 
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -73,6 +76,8 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       }
     }
 
+    const emailChanged = email !== existingUser.email
+
     const user = await prisma.user.update({
       where: { id: params.id },
       data: {
@@ -83,6 +88,22 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         departmentId: departmentId === "NONE" ? null : departmentId,
       },
     })
+
+    if (emailChanged) {
+      const resetToken = generateResetToken()
+      await prisma.verificationToken.create({
+        data: {
+          identifier: email,
+          token: resetToken,
+          expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        },
+      })
+      await prisma.session.deleteMany({ where: { userId: params.id } })
+      await sendEmailUpdateNotification(email, resetToken)
+      await createAuditLog(session.user.id, "UPDATE_USER_EMAIL", "User", params.id)
+    } else {
+      await createAuditLog(session.user.id, "UPDATE_USER", "User", params.id)
+    }
 
     return NextResponse.json({
       message: "User updated successfully",
@@ -137,6 +158,8 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     await prisma.user.delete({
       where: { id: params.id },
     })
+
+    await createAuditLog(session.user.id, "DELETE_USER", "User", params.id)
 
     return NextResponse.json({
       message: "User deleted successfully",

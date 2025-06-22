@@ -43,3 +43,17 @@ export async function sendAccountSetupEmailFallback(
 
   return Promise.resolve()
 }
+
+export async function sendEmailUpdateNotificationFallback(
+  email: string,
+  resetToken: string,
+) {
+  const resetUrl = `${process.env.NEXTAUTH_URL}/auth/reset-password?token=${resetToken}`
+
+  console.log("=== EMAIL UPDATE NOTIFICATION ===")
+  console.log(`To: ${email}`)
+  console.log(`Reset URL: ${resetUrl}`)
+  console.log("=================================")
+
+  return Promise.resolve()
+}

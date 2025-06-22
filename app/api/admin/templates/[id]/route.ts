@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth/next"
 import type { Session } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { createAuditLog } from "@/lib/audit"
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -89,6 +90,8 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       },
     })
 
+    await createAuditLog(session.user.id, "UPDATE_TEMPLATE", "Template", params.id)
+
     return NextResponse.json({
       message: "Template updated successfully",
       template,
@@ -137,6 +140,8 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     await prisma.masterTemplate.delete({
       where: { id: params.id },
     })
+
+    await createAuditLog(session.user.id, "DELETE_TEMPLATE", "Template", params.id)
 
     return NextResponse.json({
       message: "Template deleted successfully",

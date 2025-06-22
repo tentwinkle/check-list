@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth/next"
 import type { Session } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { createAuditLog } from "@/lib/audit"
 
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -39,6 +40,8 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         description,
       },
     })
+
+    await createAuditLog(session.user.id, "UPDATE_DEPARTMENT", "Department", params.id)
 
     return NextResponse.json({
       message: "Department updated successfully",
@@ -93,6 +96,8 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     await prisma.department.delete({
       where: { id: params.id },
     })
+
+    await createAuditLog(session.user.id, "DELETE_DEPARTMENT", "Department", params.id)
 
     return NextResponse.json({
       message: "Department deleted successfully",

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import type { Session } from "next-auth"
 import { prisma } from "@/lib/prisma"
+import { createAuditLog } from "@/lib/audit"
 
 export async function GET() {
   try {
@@ -66,6 +67,8 @@ export async function POST(request: NextRequest) {
         areaId,
       },
     })
+
+    await createAuditLog(session.user.id, "CREATE_DEPARTMENT", "Department", department.id)
 
     return NextResponse.json({
       message: "Department created successfully",
