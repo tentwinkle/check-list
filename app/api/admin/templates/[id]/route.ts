@@ -128,15 +128,6 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       return NextResponse.json({ error: "Template not found" }, { status: 404 })
     }
 
-    // Check if template has inspections
-    const inspectionCount = await prisma.inspectionInstance.count({
-      where: { masterTemplateId: params.id },
-    })
-
-    if (inspectionCount > 0) {
-      return NextResponse.json({ error: "Cannot delete template with existing inspections" }, { status: 400 })
-    }
-
     await prisma.masterTemplate.delete({
       where: { id: params.id },
     })

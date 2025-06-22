@@ -79,20 +79,6 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       return NextResponse.json({ error: "Department not found" }, { status: 404 })
     }
 
-    // Check if department has users, templates, or inspections
-    const [userCount, templateCount, inspectionCount] = await Promise.all([
-      prisma.user.count({ where: { departmentId: params.id } }),
-      prisma.masterTemplate.count({ where: { departmentId: params.id } }),
-      prisma.inspectionInstance.count({ where: { departmentId: params.id } }),
-    ])
-
-    if (userCount > 0 || templateCount > 0 || inspectionCount > 0) {
-      return NextResponse.json(
-        { error: "Cannot delete department with existing users, templates, or inspections" },
-        { status: 400 },
-      )
-    }
-
     await prisma.department.delete({
       where: { id: params.id },
     })
