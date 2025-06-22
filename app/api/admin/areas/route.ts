@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import type { Session } from "next-auth"
 import { prisma } from "@/lib/prisma"
-import { sendPasswordResetEmail, sendWelcomeEmail } from "@/lib/email"
+import { sendAccountSetupEmail } from "@/lib/email"
 import { generateResetToken } from "@/lib/utils"
 import bcrypt from "bcryptjs"
 
@@ -114,11 +114,14 @@ export async function POST(request: NextRequest) {
       select: { name: true },
     })
 
-    // Send welcome email and password reset email
-    await Promise.all([
-      sendWelcomeEmail(leaderEmail, leaderName, "Area Leader", organization?.name || "Organization"),
-      sendPasswordResetEmail(leaderEmail, result.resetToken),
-    ])
+    // Send account setup email
+    await sendAccountSetupEmail(
+      leaderEmail,
+      leaderName,
+      "Area Leader",
+      organization?.name || "Organization",
+      result.resetToken,
+    )
 
     return NextResponse.json({
       message: "Area created successfully",

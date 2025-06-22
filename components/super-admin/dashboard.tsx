@@ -21,6 +21,7 @@ export function SuperAdminDashboard() {
     activeInspections: 0,
   })
   const [showCreateDialog, setShowCreateDialog] = useState(false)
+  const [listKey, setListKey] = useState(0)
 
   useEffect(() => {
     fetchStats()
@@ -110,11 +111,18 @@ export function SuperAdminDashboard() {
             </div>
           </CardHeader>
           <CardContent>
-            <OrganizationsList onUpdate={fetchStats} />
+            <OrganizationsList key={listKey} onUpdate={fetchStats} />
           </CardContent>
         </Card>
 
-        <CreateOrganizationDialog open={showCreateDialog} onOpenChange={setShowCreateDialog} onSuccess={fetchStats} />
+        <CreateOrganizationDialog
+          open={showCreateDialog}
+          onOpenChange={setShowCreateDialog}
+          onSuccess={() => {
+            fetchStats()
+            setListKey((k) => k + 1)
+          }}
+        />
       </div>
     </div>
   )

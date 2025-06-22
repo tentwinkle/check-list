@@ -21,3 +21,25 @@ export async function sendWelcomeEmailFallback(email: string, name: string, role
 
   return Promise.resolve()
 }
+
+export async function sendAccountSetupEmailFallback(
+  email: string,
+  name: string,
+  role: string,
+  organizationName: string,
+  resetToken: string,
+) {
+  const resetUrl = `${process.env.NEXTAUTH_URL}/auth/reset-password?token=${resetToken}`
+  const loginUrl = `${process.env.NEXTAUTH_URL}/auth/signin`
+
+  console.log("=== ACCOUNT SETUP EMAIL ===")
+  console.log(`To: ${email}`)
+  console.log(`Name: ${name}`)
+  console.log(`Role: ${role}`)
+  console.log(`Organization: ${organizationName}`)
+  console.log(`Reset URL: ${resetUrl}`)
+  console.log(`Login URL: ${loginUrl}`)
+  console.log("===========================")
+
+  return Promise.resolve()
+}

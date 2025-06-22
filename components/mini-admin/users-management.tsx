@@ -13,6 +13,7 @@ interface UsersManagementProps {
 
 export function MiniAdminUsersManagement({ onUpdate }: UsersManagementProps) {
   const [showCreateDialog, setShowCreateDialog] = useState(false)
+  const [listKey, setListKey] = useState(0)
 
   return (
     <Card>
@@ -29,10 +30,17 @@ export function MiniAdminUsersManagement({ onUpdate }: UsersManagementProps) {
         </div>
       </CardHeader>
       <CardContent>
-        <UsersList onUpdate={onUpdate} />
+        <UsersList key={listKey} onUpdate={onUpdate} />
       </CardContent>
 
-      <CreateUserDialog open={showCreateDialog} onOpenChange={setShowCreateDialog} onSuccess={onUpdate} />
+      <CreateUserDialog
+        open={showCreateDialog}
+        onOpenChange={setShowCreateDialog}
+        onSuccess={() => {
+          onUpdate()
+          setListKey((k) => k + 1)
+        }}
+      />
     </Card>
   )
 }

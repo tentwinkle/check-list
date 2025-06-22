@@ -13,6 +13,7 @@ interface AreasManagementProps {
 
 export function AreasManagement({ onUpdate }: AreasManagementProps) {
   const [showCreateDialog, setShowCreateDialog] = useState(false)
+  const [listKey, setListKey] = useState(0)
 
   return (
     <Card>
@@ -29,10 +30,17 @@ export function AreasManagement({ onUpdate }: AreasManagementProps) {
         </div>
       </CardHeader>
       <CardContent>
-        <AreasList onUpdate={onUpdate} />
+        <AreasList key={listKey} onUpdate={onUpdate} />
       </CardContent>
 
-      <CreateAreaDialog open={showCreateDialog} onOpenChange={setShowCreateDialog} onSuccess={onUpdate} />
+      <CreateAreaDialog
+        open={showCreateDialog}
+        onOpenChange={setShowCreateDialog}
+        onSuccess={() => {
+          onUpdate()
+          setListKey((k) => k + 1)
+        }}
+      />
     </Card>
   )
 }
