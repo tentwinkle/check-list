@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth/next"
 import type { Session } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
-import { sendPasswordResetEmail, sendWelcomeEmail } from "@/lib/email"
+import { sendAccountSetupEmail } from "@/lib/email"
 import { generateResetToken } from "@/lib/utils"
 import bcrypt from "bcryptjs"
 
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
     })
 
     if (existingUser) {
-      return NextResponse.json({ error: "Email already exists" }, { status: 400 })
+      return NextResponse.json({ message: "Email already in use" }, { status: 400 })
     }
 
     // Create organization and admin user in a transaction
@@ -94,11 +94,14 @@ export async function POST(request: NextRequest) {
       return { organization, adminUser, resetToken }
     })
 
-    // Send welcome email and password reset email
-    await Promise.all([
-      sendWelcomeEmail(adminEmail, adminName, "Team Leader", organizationName),
-      sendPasswordResetEmail(adminEmail, result.resetToken),
-    ])
+    // Send account setup email
+    await sendAccountSetupEmail(
+      adminEmail,
+      adminName,
+      "Team Leader",
+      organizationName,
+      result.resetToken,
+    )
 
     return NextResponse.json({
       message: "Organization created successfully",

@@ -13,6 +13,7 @@ interface DepartmentsManagementProps {
 
 export function DepartmentsManagement({ onUpdate }: DepartmentsManagementProps) {
   const [showCreateDialog, setShowCreateDialog] = useState(false)
+  const [listKey, setListKey] = useState(0)
 
   return (
     <Card>
@@ -29,10 +30,17 @@ export function DepartmentsManagement({ onUpdate }: DepartmentsManagementProps) 
         </div>
       </CardHeader>
       <CardContent>
-        <DepartmentsList onUpdate={onUpdate} />
+        <DepartmentsList key={listKey} onUpdate={onUpdate} />
       </CardContent>
 
-      <CreateDepartmentDialog open={showCreateDialog} onOpenChange={setShowCreateDialog} onSuccess={onUpdate} />
+      <CreateDepartmentDialog
+        open={showCreateDialog}
+        onOpenChange={setShowCreateDialog}
+        onSuccess={() => {
+          onUpdate()
+          setListKey((k) => k + 1)
+        }}
+      />
     </Card>
   )
 }

@@ -1,5 +1,5 @@
 import nodemailer from "nodemailer";
-import { sendPasswordResetEmailFallback, sendWelcomeEmailFallback } from "./email-fallback";
+import { sendPasswordResetEmailFallback, sendWelcomeEmailFallback, sendAccountSetupEmailFallback } from "./email-fallback";
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
@@ -73,6 +73,47 @@ export async function sendWelcomeEmail(email: string, name: string, role: string
   } catch (error) {
     console.error("Error sending welcome email:", error)
     throw new Error("Failed to send welcome email")
+  }
+}
+
+export async function sendAccountSetupEmail(
+  email: string,
+  name: string,
+  role: string,
+  organizationName: string,
+  resetToken: string,
+) {
+  if (process.env.NODE_ENV === "development" && !process.env.SMTP_HOST) {
+    return sendAccountSetupEmailFallback(email, name, role, organizationName, resetToken)
+  }
+
+  const resetUrl = `${process.env.NEXTAUTH_URL}/auth/reset-password?token=${resetToken}`
+  const loginUrl = `${process.env.NEXTAUTH_URL}/auth/signin`
+
+  const mailOptions = {
+    from: process.env.SMTP_FROM,
+    to: email,
+    subject: "Welcome to Inspection System",
+    html: `
+      <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
+        <h2>Welcome to the Inspection System</h2>
+        <p>Hello ${name},</p>
+        <p>You have been added to <strong>${organizationName}</strong> with the role of <strong>${role}</strong>.</p>
+        <p>Please click the link below to set your password:</p>
+        <a href="${resetUrl}" style="display: inline-block; padding: 12px 24px; background-color: #007bff; color: white; text-decoration: none; border-radius: 4px; margin: 20px 0;">Set Password</a>
+        <p>After setting your password you can log in here:</p>
+        <a href="${loginUrl}" style="display: inline-block; padding: 12px 24px; background-color: #28a745; color: white; text-decoration: none; border-radius: 4px;">Login</a>
+        <p>This link will expire in 24 hours.</p>
+      </div>
+    `,
+  }
+
+  try {
+    await transporter.sendMail(mailOptions)
+    console.log(`Account setup email sent to ${email}`)
+  } catch (error) {
+    console.error("Error sending account setup email:", error)
+    throw new Error("Failed to send account setup email")
   }
 }
 

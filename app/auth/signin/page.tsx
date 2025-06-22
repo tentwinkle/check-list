@@ -11,12 +11,14 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2 } from "lucide-react"
+import { ForgotPasswordDialog } from "@/components/auth/forgot-password-dialog"
 
 export default function SignInPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
+  const [forgotOpen, setForgotOpen] = useState(false)
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -104,9 +106,17 @@ export default function SignInPage() {
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Sign In
             </Button>
+            <button
+              type="button"
+              onClick={() => setForgotOpen(true)}
+              className="text-sm text-blue-600 hover:underline w-full text-center"
+            >
+              Forgot password?
+            </button>
           </form>
         </CardContent>
       </Card>
+      <ForgotPasswordDialog open={forgotOpen} onOpenChange={setForgotOpen} />
     </div>
   )
 }
