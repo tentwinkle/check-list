@@ -47,7 +47,7 @@ export default function MiniAdminTemplateItemsPage({ params }: PageProps) {
   }
 
   if (status === "loading" || loading) {
-    return <div className="container mx-auto py-6">Loading...</div>
+    return <div className="container mx-auto mobile-padding py-6">Loading...</div>
   }
 
   if (!session || (session.user as { role: string }).role !== "MINI_ADMIN") {
@@ -56,11 +56,11 @@ export default function MiniAdminTemplateItemsPage({ params }: PageProps) {
   }
 
   if (!template) {
-    return <div className="container mx-auto py-6">Template not found</div>
+    return <div className="container mx-auto mobile-padding py-6">Template not found</div>
   }
 
   return (
-    <div className="container mx-auto py-6">
+    <div className="container mx-auto mobile-padding py-6">
       <div className="mb-6">
         <Link href="/mini-admin">
           <Button variant="outline" size="sm">

@@ -1,19 +1,38 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Button } from "@/components/ui/button"
-import { MoreHorizontal, Edit, Trash2, QrCode, MoveUp, MoveDown } from "lucide-react"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { useToast } from "@/hooks/use-toast"
+import { useState, useEffect } from "react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import {
+  MoreHorizontal,
+  Edit,
+  Trash2,
+  QrCode,
+  MoveUp,
+  MoveDown,
+} from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useToast } from "@/hooks/use-toast";
 
 interface TemplateItem {
-  id: string
-  name: string
-  description?: string
-  location?: string
-  qrCodeId: string
-  order: number
+  id: string;
+  name: string;
+  description?: string;
+  location?: string;
+  qrCodeId: string;
+  order: number;
 }
 
 interface TemplateItemsListProps {
@@ -118,6 +137,8 @@ export function TemplateItemsList({ templateId, onUpdate, onShowQR }: TemplateIt
     )
   }
 
+  const sortedItems = [...items].sort((a, b) => a.order - b.order);
+
   return (
     <Table>
       <TableHeader>
@@ -131,7 +152,7 @@ export function TemplateItemsList({ templateId, onUpdate, onShowQR }: TemplateIt
         </TableRow>
       </TableHeader>
       <TableBody>
-        {items.map((item, index) => (
+        {sortedItems.map((item, index) => (
           <TableRow key={item.id}>
             <TableCell>
               <div className="flex items-center gap-1">
@@ -151,7 +172,7 @@ export function TemplateItemsList({ templateId, onUpdate, onShowQR }: TemplateIt
                     size="sm"
                     className="h-6 w-6 p-0"
                     onClick={() => handleReorder(item.id, "down")}
-                    disabled={index === items.length - 1}
+                    disabled={index === sortedItems.length - 1}
                   >
                     <MoveDown className="h-3 w-3" />
                   </Button>

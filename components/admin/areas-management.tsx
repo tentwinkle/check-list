@@ -17,12 +17,12 @@ export function AreasManagement({ onUpdate }: AreasManagementProps) {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <CardTitle>Areas Management</CardTitle>
             <CardDescription>Create and manage areas within your organization</CardDescription>
           </div>
-          <Button onClick={() => setShowCreateDialog(true)}>
+          <Button onClick={() => setShowCreateDialog(true)} className="w-full sm:w-auto">
             <Plus className="mr-2 h-4 w-4" />
             Create Area
           </Button>

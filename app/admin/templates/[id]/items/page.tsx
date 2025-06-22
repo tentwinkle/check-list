@@ -50,7 +50,7 @@ export default function TemplateItemsPage({ params }: TemplateItemsPageProps) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Navigation />
-        <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto mobile-padding py-6">
           <div className="flex items-center justify-center h-64">
             <div className="text-lg">Loading...</div>
           </div>
@@ -66,7 +66,7 @@ export default function TemplateItemsPage({ params }: TemplateItemsPageProps) {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
-      <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto mobile-padding py-6">
         <TemplateItemsManagement templateId={params.id} templateName={template.name} onUpdate={fetchTemplate} />
       </div>
     </div>

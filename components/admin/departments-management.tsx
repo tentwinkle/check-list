@@ -17,12 +17,12 @@ export function DepartmentsManagement({ onUpdate }: DepartmentsManagementProps) 
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <CardTitle>Departments Management</CardTitle>
             <CardDescription>Create and manage departments across all areas in your organization</CardDescription>
           </div>
-          <Button onClick={() => setShowCreateDialog(true)}>
+          <Button onClick={() => setShowCreateDialog(true)} className="w-full sm:w-auto">
             <Plus className="mr-2 h-4 w-4" />
             Create Department
           </Button>

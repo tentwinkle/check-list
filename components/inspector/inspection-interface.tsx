@@ -258,11 +258,11 @@ export function InspectionInterface({ inspectionId }: InspectionInterfaceProps) 
     <div className="min-h-screen bg-gray-50">
       <Navigation />
 
-      <div className="max-w-4xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto mobile-padding py-6 sm:py-8">
         {/* Header */}
         <div className="mb-6">
-          <div className="flex items-center justify-between">
-            <Button variant="outline" onClick={() => router.push("/inspector")}>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <Button variant="outline" onClick={() => router.push("/inspector")} className="w-full sm:w-auto">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Dashboard
             </Button>
@@ -271,7 +271,7 @@ export function InspectionInterface({ inspectionId }: InspectionInterfaceProps) 
                 {completedItems} of {totalItems} completed
               </Badge>
               {inspection.status === "COMPLETED" && (
-                <Button variant="outline" onClick={downloadPDF} disabled={downloadingPdf}>
+                <Button variant="outline" onClick={downloadPDF} disabled={downloadingPdf} className="w-full sm:w-auto">
                   {downloadingPdf ? (
                     <>
                       <Download className="mr-2 h-4 w-4 animate-spin" />
@@ -300,7 +300,7 @@ export function InspectionInterface({ inspectionId }: InspectionInterfaceProps) 
 
         {/* Progress */}
         <div className="mb-6">
-          <div className="flex justify-between text-sm text-gray-600 mb-2">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-sm text-gray-600 gap-2 mb-2">
             <span>Progress</span>
             <span>
               {completedItems}/{totalItems}
@@ -317,7 +317,7 @@ export function InspectionInterface({ inspectionId }: InspectionInterfaceProps) 
         {/* Current Item */}
         <Card className="mb-6">
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
               <div>
                 <CardTitle className="flex items-center gap-2">
                   Item {currentItem.order}: {currentItem.name}
@@ -346,11 +346,12 @@ export function InspectionInterface({ inspectionId }: InspectionInterfaceProps) 
         </Card>
 
         {/* Navigation */}
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <Button
             variant="outline"
             onClick={() => setCurrentItemIndex(Math.max(0, currentItemIndex - 1))}
             disabled={currentItemIndex === 0}
+            className="w-full sm:w-auto"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
             Previous
@@ -364,6 +365,7 @@ export function InspectionInterface({ inspectionId }: InspectionInterfaceProps) 
             variant="outline"
             onClick={() => setCurrentItemIndex(Math.min(totalItems - 1, currentItemIndex + 1))}
             disabled={currentItemIndex === totalItems - 1}
+            className="w-full sm:w-auto"
           >
             Next
             <ArrowRight className="ml-2 h-4 w-4" />
@@ -377,7 +379,7 @@ export function InspectionInterface({ inspectionId }: InspectionInterfaceProps) 
               <div className="text-center">
                 <h3 className="text-lg font-medium mb-2">Ready to Submit</h3>
                 <p className="text-gray-600 mb-4">All items have been completed. Submit this inspection for review.</p>
-                <Button onClick={submitInspection} disabled={submitting} size="lg">
+                <Button onClick={submitInspection} disabled={submitting} size="lg" className="w-full sm:w-auto">
                   {submitting ? (
                     <>
                       <Save className="mr-2 h-4 w-4 animate-spin" />

@@ -75,28 +75,28 @@ export function MiniAdminTemplateItemsManagement({ templateId, templateName, onU
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <CardTitle>Template Items - {templateName}</CardTitle>
               <CardDescription>Manage checklist items for this inspection template</CardDescription>
             </div>
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setShowQRDialog(true)} disabled={items.length === 0}>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 w-full sm:w-auto sm:block">
+              <Button variant="outline" onClick={() => setShowQRDialog(true)} disabled={items.length === 0} className="w-full sm:w-auto">
                 <QrCode className="mr-2 h-4 w-4" />
                 View QR Codes
               </Button>
-              <Button variant="outline" onClick={handleDownloadAllQR} disabled={items.length === 0 || loading}>
+              <Button variant="outline" onClick={handleDownloadAllQR} disabled={items.length === 0 || loading} className="w-full sm:w-auto">
                 <Download className="mr-2 h-4 w-4" />
                 Download All QR
               </Button>
-              <Button onClick={() => setShowCreateDialog(true)}>
+              <Button onClick={() => setShowCreateDialog(true)} className="w-full sm:w-auto">
                 <Plus className="mr-2 h-4 w-4" />
                 Add Item
               </Button>
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="overflow-auto">
           <TemplateItemsList
             templateId={templateId}
             items={items}

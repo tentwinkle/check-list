@@ -17,12 +17,12 @@ export function MiniAdminTemplatesManagement({ onUpdate }: TemplatesManagementPr
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <CardTitle>Templates Management</CardTitle>
             <CardDescription>Create and manage inspection templates for your area</CardDescription>
           </div>
-          <Button onClick={() => setShowCreateDialog(true)}>
+          <Button onClick={() => setShowCreateDialog(true)} className="w-full sm:w-auto">
             <Plus className="mr-2 h-4 w-4" />
             Create Template
           </Button>

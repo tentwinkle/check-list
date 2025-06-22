@@ -39,44 +39,58 @@ export function SuperAdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       <Navigation />
 
-      <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Super Admin Dashboard</h1>
-          <p className="mt-2 text-gray-600">Manage organizations and system-wide settings</p>
+      <div className="max-w-7xl mx-auto mobile-padding py-6 sm:py-8">
+        <div className="mb-8 animate-fade-in">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
+                Super Admin Dashboard
+              </h1>
+              <p className="mt-2 text-gray-600 mobile-text">
+                Manage organizations and system-wide settings
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card>
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8 animate-slide-up">
+          <Card variant="glass" className="hover:scale-105 transition-all duration-300">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Organizations</CardTitle>
-              <Building2 className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-gray-700">Total Organizations</CardTitle>
+              <Building2 className="h-4 w-4 text-purple-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.totalOrganizations}</div>
+              <div className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-purple-700 bg-clip-text text-transparent">
+                {stats.totalOrganizations}
+              </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card variant="glass" className="hover:scale-105 transition-all duration-300">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-gray-700">Total Users</CardTitle>
+              <Users className="h-4 w-4 text-purple-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.totalUsers}</div>
+              <div className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-purple-700 bg-clip-text text-transparent">
+                {stats.totalUsers}
+              </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card variant="glass" className="hover:scale-105 transition-all duration-300">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Inspections</CardTitle>
-              <Activity className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-gray-700">Active Inspections</CardTitle>
+              <Activity className="h-4 w-4 text-purple-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.activeInspections}</div>
+              <div className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-purple-700 bg-clip-text text-transparent">
+                {stats.activeInspections}
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -84,12 +98,12 @@ export function SuperAdminDashboard() {
         {/* Organizations Section */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
                 <CardTitle>Organizations</CardTitle>
                 <CardDescription>Manage all organizations in the system</CardDescription>
               </div>
-              <Button onClick={() => setShowCreateDialog(true)}>
+              <Button onClick={() => setShowCreateDialog(true)}  className="w-full sm:w-auto">
                 <Plus className="mr-2 h-4 w-4" />
                 Create Organization
               </Button>
