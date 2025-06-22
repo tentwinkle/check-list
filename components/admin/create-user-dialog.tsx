@@ -95,8 +95,11 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDi
         },
         body: JSON.stringify({
           ...formData,
-          areaId: formData.areaId === "" ? "NONE" : formData.areaId,
-          departmentId: formData.departmentId === "" ? "NONE" : formData.departmentId,
+          areaId: formData.areaId === "" || formData.areaId === "none" ? "NONE" : formData.areaId,
+          departmentId:
+            formData.departmentId === "" || formData.departmentId === "none"
+              ? "NONE"
+              : formData.departmentId,
         }),
       })
 
