@@ -106,8 +106,8 @@ export function AreasList({ onUpdate }: AreasListProps) {
     }
   }
 
-  const canDelete = (area: Area) => {
-    return area._count.users === 0 && area._count.departments === 0
+  const canDelete = (_area: Area) => {
+    return true
   }
 
   if (loading) {
@@ -158,7 +158,6 @@ export function AreasList({ onUpdate }: AreasListProps) {
                     <DropdownMenuItem
                       className="text-red-600"
                       onClick={() => handleDelete(area)}
-                      disabled={!canDelete(area)}
                     >
                       <Trash2 className="mr-2 h-4 w-4" />
                       Delete
@@ -187,10 +186,9 @@ export function AreasList({ onUpdate }: AreasListProps) {
             <AlertDialogTitle>Delete Area</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to delete "{deletingArea?.name}"? This action cannot be undone.
-              {deletingArea && !canDelete(deletingArea) && (
+              {deletingArea && (
                 <span className="block mt-2 text-red-600 font-medium">
-                  This area has {deletingArea._count.users} users and {deletingArea._count.departments} departments and
-                  cannot be deleted.
+                  This area has {deletingArea._count.users} users and {deletingArea._count.departments} departments.
                 </span>
               )}
             </AlertDialogDescription>
@@ -199,7 +197,7 @@ export function AreasList({ onUpdate }: AreasListProps) {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDelete}
-              disabled={deletingArea ? !canDelete(deletingArea) : true}
+              disabled={!deletingArea}
               className="bg-red-600 hover:bg-red-700"
             >
               Delete

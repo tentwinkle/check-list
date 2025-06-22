@@ -107,8 +107,8 @@ export function DepartmentsList({ onUpdate }: DepartmentsListProps) {
     }
   }
 
-  const canDelete = (department: Department) => {
-    return department._count.users === 0 && department._count.templates === 0 && department._count.inspections === 0
+  const canDelete = (_department: Department) => {
+    return true
   }
 
   if (loading) {
@@ -167,7 +167,6 @@ export function DepartmentsList({ onUpdate }: DepartmentsListProps) {
                     <DropdownMenuItem
                       className="text-red-600"
                       onClick={() => handleDelete(dept)}
-                      disabled={!canDelete(dept)}
                     >
                       <Trash2 className="mr-2 h-4 w-4" />
                       Delete
@@ -196,11 +195,10 @@ export function DepartmentsList({ onUpdate }: DepartmentsListProps) {
             <AlertDialogTitle>Delete Department</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to delete "{deletingDepartment?.name}"? This action cannot be undone.
-              {deletingDepartment && !canDelete(deletingDepartment) && (
+              {deletingDepartment && (
                 <span className="block mt-2 text-red-600 font-medium">
-                  This department has {deletingDepartment._count.users} users,{" "}
-                  {deletingDepartment._count.templates} templates, and{" "}
-                  {deletingDepartment._count.inspections} inspections and cannot be deleted.
+                  This department has {deletingDepartment._count.users} users, {" "}
+                  {deletingDepartment._count.templates} templates, and {deletingDepartment._count.inspections} inspections.
                 </span>
               )}
             </AlertDialogDescription>
@@ -209,7 +207,7 @@ export function DepartmentsList({ onUpdate }: DepartmentsListProps) {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDelete}
-              disabled={deletingDepartment ? !canDelete(deletingDepartment) : true}
+              disabled={!deletingDepartment}
               className="bg-red-600 hover:bg-red-700"
             >
               Delete

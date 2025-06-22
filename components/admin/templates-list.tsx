@@ -110,8 +110,8 @@ export function TemplatesList({ onUpdate }: TemplatesListProps) {
     }
   }
 
-  const canDelete = (template: Template) => {
-    return template._count.inspections === 0
+  const canDelete = (_template: Template) => {
+    return true
   }
 
   if (loading) {
@@ -174,7 +174,6 @@ export function TemplatesList({ onUpdate }: TemplatesListProps) {
                     <DropdownMenuItem
                       className="text-red-600"
                       onClick={() => handleDelete(template)}
-                      disabled={!canDelete(template)}
                     >
                       <Trash2 className="mr-2 h-4 w-4" />
                       Delete
@@ -202,9 +201,9 @@ export function TemplatesList({ onUpdate }: TemplatesListProps) {
             <AlertDialogTitle>Delete Template</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to delete "{deletingTemplate?.name}"? This action cannot be undone.
-              {deletingTemplate && !canDelete(deletingTemplate) && (
+              {deletingTemplate && (
                 <span className="block mt-2 text-red-600 font-medium">
-                  This template has {deletingTemplate._count.inspections} inspections and cannot be deleted.
+                  This template has {deletingTemplate._count.inspections} inspections.
                 </span>
               )}
             </AlertDialogDescription>
@@ -213,7 +212,7 @@ export function TemplatesList({ onUpdate }: TemplatesListProps) {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDelete}
-              disabled={deletingTemplate ? !canDelete(deletingTemplate) : true}
+              disabled={!deletingTemplate}
               className="bg-red-600 hover:bg-red-700"
             >
               Delete

@@ -76,16 +76,6 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       return NextResponse.json({ error: "Area not found" }, { status: 404 })
     }
 
-    // Check if area has departments or users
-    const [departmentCount, userCount] = await Promise.all([
-      prisma.department.count({ where: { areaId: params.id } }),
-      prisma.user.count({ where: { areaId: params.id } }),
-    ])
-
-    if (departmentCount > 0 || userCount > 0) {
-      return NextResponse.json({ error: "Cannot delete area with existing departments or users" }, { status: 400 })
-    }
-
     await prisma.area.delete({
       where: { id: params.id },
     })
