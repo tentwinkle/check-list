@@ -63,7 +63,10 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDi
         },
         body: JSON.stringify({
           ...formData,
-          departmentId: formData.departmentId === "" ? null : formData.departmentId,
+          departmentId:
+            formData.departmentId === "" || formData.departmentId === "none"
+              ? null
+              : formData.departmentId,
         }),
       })
 
