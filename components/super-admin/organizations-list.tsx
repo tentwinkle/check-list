@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { MoreHorizontal, Edit, Trash2 } from "lucide-react"
+import { MoreHorizontal, Edit, Trash2, UserCog } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import {
   AlertDialog,
@@ -17,6 +17,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { EditOrganizationDialog } from "./edit-organization-dialog"
+import { EditAdminDialog } from "./edit-admin-dialog"
 import { useToast } from "@/hooks/use-toast"
 import { formatDate } from "@/lib/utils"
 
@@ -42,6 +43,8 @@ export function OrganizationsList({ onUpdate }: OrganizationsListProps) {
   const [editingOrganization, setEditingOrganization] = useState<Organization | null>(null)
   const [deletingOrganization, setDeletingOrganization] = useState<Organization | null>(null)
   const [showEditDialog, setShowEditDialog] = useState(false)
+  const [showEditAdminDialog, setShowEditAdminDialog] = useState(false)
+  const [editingAdminOrgId, setEditingAdminOrgId] = useState<string | null>(null)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const { toast } = useToast()
 
@@ -66,6 +69,11 @@ export function OrganizationsList({ onUpdate }: OrganizationsListProps) {
   const handleEdit = (organization: Organization) => {
     setEditingOrganization(organization)
     setShowEditDialog(true)
+  }
+
+  const handleEditAdmin = (organization: Organization) => {
+    setEditingAdminOrgId(organization.id)
+    setShowEditAdminDialog(true)
   }
 
   const handleDelete = (organization: Organization) => {
@@ -156,9 +164,13 @@ export function OrganizationsList({ onUpdate }: OrganizationsListProps) {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => handleEdit(org)}>
+                  <DropdownMenuItem onClick={() => handleEdit(org)}>
                       <Edit className="mr-2 h-4 w-4" />
                       Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleEditAdmin(org)}>
+                      <UserCog className="mr-2 h-4 w-4" />
+                      Edit Admin
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       className="text-red-600"
@@ -184,6 +196,16 @@ export function OrganizationsList({ onUpdate }: OrganizationsListProps) {
           fetchOrganizations()
         }}
         organization={editingOrganization}
+      />
+
+      <EditAdminDialog
+        open={showEditAdminDialog}
+        onOpenChange={setShowEditAdminDialog}
+        onSuccess={() => {
+          onUpdate()
+          fetchOrganizations()
+        }}
+        organizationId={editingAdminOrgId}
       />
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
