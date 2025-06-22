@@ -3,6 +3,9 @@ import { getServerSession } from "next-auth/next"
 import type { Session } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { sendEmailUpdateNotification } from "@/lib/email"
+import { generateResetToken } from "@/lib/utils"
+import { createAuditLog } from "@/lib/audit"
 
 export async function PATCH(request: NextRequest) {
   try {
@@ -35,6 +38,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Update user profile
+    const emailChanged = email !== session.user.email
     const updateData: any = {
       name,
       email,
@@ -58,6 +62,22 @@ export async function PATCH(request: NextRequest) {
         profileImage: true,
       },
     })
+
+    if (emailChanged) {
+      const resetToken = generateResetToken()
+      await prisma.verificationToken.create({
+        data: {
+          identifier: email,
+          token: resetToken,
+          expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        },
+      })
+      await prisma.session.deleteMany({ where: { userId: session.user.id } })
+      await sendEmailUpdateNotification(email, resetToken)
+      await createAuditLog(session.user.id, "UPDATE_EMAIL", "User", session.user.id)
+    } else {
+      await createAuditLog(session.user.id, "UPDATE_PROFILE", "User", session.user.id)
+    }
 
     return NextResponse.json(updatedUser)
   } catch (error) {

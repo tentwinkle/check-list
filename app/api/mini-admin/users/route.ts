@@ -4,6 +4,7 @@ import type { Session } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { sendAccountSetupEmail } from "@/lib/email"
+import { createAuditLog } from "@/lib/audit"
 import { generateResetToken } from "@/lib/utils"
 import bcrypt from "bcryptjs"
 
@@ -128,6 +129,8 @@ export async function POST(request: NextRequest) {
       organization?.name || "Organization",
       result.resetToken,
     )
+
+    await createAuditLog(session.user.id, "CREATE_USER", "User", result.user.id)
 
     return NextResponse.json({
       message: "User created successfully",

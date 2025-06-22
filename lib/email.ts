@@ -1,5 +1,5 @@
 import nodemailer from "nodemailer";
-import { sendPasswordResetEmailFallback, sendWelcomeEmailFallback, sendAccountSetupEmailFallback } from "./email-fallback";
+import { sendPasswordResetEmailFallback, sendWelcomeEmailFallback, sendAccountSetupEmailFallback, sendEmailUpdateNotificationFallback } from "./email-fallback";
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
@@ -114,6 +114,36 @@ export async function sendAccountSetupEmail(
   } catch (error) {
     console.error("Error sending account setup email:", error)
     throw new Error("Failed to send account setup email")
+  }
+}
+
+export async function sendEmailUpdateNotification(email: string, resetToken: string) {
+  if (process.env.NODE_ENV === "development" && !process.env.SMTP_HOST) {
+    return sendEmailUpdateNotificationFallback(email, resetToken)
+  }
+
+  const resetUrl = `${process.env.NEXTAUTH_URL}/auth/reset-password?token=${resetToken}`
+
+  const mailOptions = {
+    from: process.env.SMTP_FROM,
+    to: email,
+    subject: "Your account email was updated",
+    html: `
+      <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
+        <h2>Email Updated</h2>
+        <p>Your account email has been changed. Please use the link below to set a new password and log in:</p>
+        <a href="${resetUrl}" style="display: inline-block; padding: 12px 24px; background-color: #007bff; color: white; text-decoration: none; border-radius: 4px; margin: 20px 0;">Set Password</a>
+        <p>If you did not request this change please contact your administrator.</p>
+      </div>
+    `,
+  }
+
+  try {
+    await transporter.sendMail(mailOptions)
+    console.log(`Email update notification sent to ${email}`)
+  } catch (error) {
+    console.error("Error sending email update notification:", error)
+    throw new Error("Failed to send update notification email")
   }
 }
 
