@@ -13,6 +13,7 @@ interface TemplatesManagementProps {
 
 export function MiniAdminTemplatesManagement({ onUpdate }: TemplatesManagementProps) {
   const [showCreateDialog, setShowCreateDialog] = useState(false)
+  const [refreshKey, setRefreshKey] = useState(0)
 
   return (
     <Card>
@@ -29,10 +30,17 @@ export function MiniAdminTemplatesManagement({ onUpdate }: TemplatesManagementPr
         </div>
       </CardHeader>
       <CardContent>
-        <TemplatesList onUpdate={onUpdate} />
+        <TemplatesList onUpdate={onUpdate} refreshKey={refreshKey} />
       </CardContent>
 
-      <CreateTemplateDialog open={showCreateDialog} onOpenChange={setShowCreateDialog} onSuccess={onUpdate} />
+      <CreateTemplateDialog
+        open={showCreateDialog}
+        onOpenChange={setShowCreateDialog}
+        onSuccess={() => {
+          onUpdate()
+          setRefreshKey((k) => k + 1)
+        }}
+      />
     </Card>
   )
 }

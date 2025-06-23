@@ -38,9 +38,10 @@ interface Template {
 
 interface TemplatesListProps {
   onUpdate: () => void
+  refreshKey: number
 }
 
-export function TemplatesList({ onUpdate }: TemplatesListProps) {
+export function TemplatesList({ onUpdate, refreshKey }: TemplatesListProps) {
   const [templates, setTemplates] = useState<Template[]>([])
   const [loading, setLoading] = useState(true)
   const [editingTemplate, setEditingTemplate] = useState<Template | null>(null)
@@ -51,7 +52,7 @@ export function TemplatesList({ onUpdate }: TemplatesListProps) {
 
   useEffect(() => {
     fetchTemplates()
-  }, [])
+  }, [refreshKey])
 
   const fetchTemplates = async () => {
     try {
