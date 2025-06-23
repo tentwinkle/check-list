@@ -10,7 +10,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: "Email is required" }, { status: 400 })
     }
 
-    const user = await prisma.user.findUnique({ where: { email } })
+    const user = await prisma.user.findFirst({
+      where: {
+        email: {
+          equals: email,
+          mode: "insensitive",
+        },
+      },
+    })
     if (!user) {
       // Respond with success even if user not found to avoid email enumeration
       return NextResponse.json({ message: "If an account exists, a reset link has been sent" })

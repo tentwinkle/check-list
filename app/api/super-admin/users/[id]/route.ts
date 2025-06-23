@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth/next"
 import type { Session } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { sendEmailUpdateNotification } from "@/lib/email"
+import { generateResetToken } from "@/lib/utils"
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -47,7 +49,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     if (email && email !== existingUser.email) {
       const emailExists = await prisma.user.findFirst({
         where: {
-          email,
+          email: { equals: email, mode: "insensitive" },
           id: { not: params.id },
         },
       })
@@ -57,6 +59,8 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       }
     }
 
+    const emailChanged = email && email !== existingUser.email
+
     const user = await prisma.user.update({
       where: { id: params.id },
       data: {
@@ -64,6 +68,19 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         email,
       },
     })
+
+    if (emailChanged) {
+      const resetToken = generateResetToken()
+      await prisma.verificationToken.create({
+        data: {
+          identifier: email,
+          token: resetToken,
+          expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        },
+      })
+      await prisma.session.deleteMany({ where: { userId: params.id } })
+      await sendEmailUpdateNotification(email, resetToken)
+    }
 
     return NextResponse.json({ message: "User updated successfully", user })
   } catch (error) {
