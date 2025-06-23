@@ -80,15 +80,30 @@ export const authOptions: NextAuthOptions = {
       return token
     },
     async session({ session, token }) {
-      if (token) {
+      if (!token?.sub) return null
+
+      try {
+        const user = await prisma.user.findUnique({
+          where: { id: token.sub as string },
+          select: { email: true },
+        })
+
+        if (!user || user.email !== token.email) {
+          return null
+        }
+
         session.user.id = token.sub!
         session.user.role = token.role as string
         session.user.organizationId = token.organizationId as string
         session.user.areaId = token.areaId as string
         session.user.departmentId = token.departmentId as string
         session.user.profileImage = token.profileImage as string
+
+        return session
+      } catch (error) {
+        console.error("Error validating session:", error)
+        return null
       }
-      return session
     },
   },
   pages: {
