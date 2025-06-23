@@ -40,15 +40,6 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Check if organization has users
-    const userCount = await prisma.user.count({
-      where: { organizationId: params.id },
-    })
-
-    if (userCount > 0) {
-      return NextResponse.json({ error: "Cannot delete organization with existing users" }, { status: 400 })
-    }
-
     await prisma.organization.delete({
       where: { id: params.id },
     })
