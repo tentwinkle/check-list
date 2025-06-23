@@ -29,7 +29,7 @@ export function CreateDepartmentDialog({ open, onOpenChange, onSuccess }: Create
   const [formData, setFormData] = useState({
     departmentName: "",
     departmentDescription: "",
-    areaId: "",
+    areaId: "none",
   })
   const { toast } = useToast()
 
@@ -72,7 +72,7 @@ export function CreateDepartmentDialog({ open, onOpenChange, onSuccess }: Create
         setFormData({
           departmentName: "",
           departmentDescription: "",
-          areaId: "",
+          areaId: "none",
         })
         onOpenChange(false)
         onSuccess()
@@ -80,7 +80,7 @@ export function CreateDepartmentDialog({ open, onOpenChange, onSuccess }: Create
         const error = await response.json()
         toast({
           title: "Error",
-          description: error.message || "Failed to create department",
+          description: error.error || error.message || "Failed to create department",
           variant: "destructive",
         })
       }

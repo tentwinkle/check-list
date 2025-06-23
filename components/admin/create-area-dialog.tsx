@@ -57,7 +57,7 @@ export function CreateAreaDialog({ open, onOpenChange, onSuccess }: CreateAreaDi
         const error = await response.json()
         toast({
           title: "Error",
-          description: error.message || "Failed to create area",
+          description: error.error || error.message || "Failed to create area",
           variant: "destructive",
         })
       }

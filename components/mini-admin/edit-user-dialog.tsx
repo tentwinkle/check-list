@@ -95,7 +95,7 @@ export function EditUserDialog({ user, open, onOpenChange, onSuccess }: EditUser
         const error = await response.json()
         toast({
           title: "Error",
-          description: error.message || "Failed to update user",
+          description: error.error || error.message || "Failed to update user",
           variant: "destructive",
         })
       }
