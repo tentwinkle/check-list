@@ -87,7 +87,7 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDi
         const error = await response.json()
         toast({
           title: "Error",
-          description: error.message || "Failed to create user",
+          description: error.error || error.message || "Failed to create user",
           variant: "destructive",
         })
       }
