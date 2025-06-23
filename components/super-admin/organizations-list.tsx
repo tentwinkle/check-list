@@ -175,7 +175,6 @@ export function OrganizationsList({ onUpdate }: OrganizationsListProps) {
                     <DropdownMenuItem
                       className="text-red-600"
                       onClick={() => handleDelete(org)}
-                      disabled={org._count.users > 0}
                     >
                       <Trash2 className="mr-2 h-4 w-4" />
                       Delete
@@ -214,9 +213,9 @@ export function OrganizationsList({ onUpdate }: OrganizationsListProps) {
             <AlertDialogTitle>Delete Organization</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to delete "{deletingOrganization?.name}"? This action cannot be undone.
-              {deletingOrganization?._count?.users > 0 && (
+              {deletingOrganization && (
                 <span className="block mt-2 text-red-600 font-medium">
-                  This organization has {deletingOrganization?._count?.users} users and cannot be deleted.
+                  This organization has {deletingOrganization._count?.users} users.
                 </span>
               )}
             </AlertDialogDescription>
@@ -225,7 +224,7 @@ export function OrganizationsList({ onUpdate }: OrganizationsListProps) {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDelete}
-              disabled={deletingOrganization?._count.users > 0}
+              disabled={!deletingOrganization}
               className="bg-red-600 hover:bg-red-700"
             >
               Delete
