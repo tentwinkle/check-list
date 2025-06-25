@@ -54,11 +54,20 @@ export async function generateInspectionPDF(reportData: ReportData): Promise<Uin
   const start = new Date(reportData.inspectionInstance.createdAt)
   const end = new Date(reportData.inspectionInstance.completedAt)
   const dateStr = start.toLocaleDateString("da-DK")
-  const startStr = start.toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" })
-  const endStr = end.toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" })
+  const startStr = start.toLocaleTimeString("da-DK", {
+    hour: "2-digit",
+    minute: "2-digit",
+  })
+  const endStr = end.toLocaleTimeString("da-DK", {
+    hour: "2-digit",
+    minute: "2-digit",
+  })
   const durationMs = end.getTime() - start.getTime()
   const durationMin = Math.max(0, Math.round(durationMs / 60000))
-  const durationStr = `${Math.floor(durationMin / 60)}h ${durationMin % 60}m`
+  const durationStr =
+    durationMin < 60
+      ? `${durationMin} minutes`
+      : `${Math.floor(durationMin / 60)}h ${durationMin % 60}m`
 
   const location = reportData.inspectionInstance.department.area
     ? `${reportData.inspectionInstance.department.name} - ${reportData.inspectionInstance.department.area.name}`
@@ -143,7 +152,7 @@ export async function generateInspectionPDF(reportData: ReportData): Promise<Uin
 
     doc.text(String(idx + 1), colX[0] + 1, yPosition)
     doc.text(item.checklistItem.id.slice(0, 8), colX[1] + 1, yPosition)
-    doc.text(item.imageUrl ? "true" : "false", colX[2] + 1, yPosition)
+    doc.text(item.imageUrl ? "Ja" : "Nej", colX[2] + 1, yPosition)
     doc.text(item.checklistItem.name, colX[3] + 1, yPosition)
     doc.text(item.checklistItem.location || "-", colX[4] + 1, yPosition)
     doc.setTextColor(...statusColor)
@@ -166,7 +175,7 @@ export async function generateInspectionPDF(reportData: ReportData): Promise<Uin
       footerY,
       { maxWidth: pageWidth - 2 * margin }
     )
-    doc.text(`Digitally finalized: ${dateStr}`, margin, footerY + 8)
+    doc.text(`Digitally finalized: ${dateStr} kl. ${endStr}`, margin, footerY + 8)
     doc.text(`Page ${i} of ${pageCount}`, pageWidth - margin - 30, footerY + 8)
   }
 
