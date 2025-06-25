@@ -1,8 +1,12 @@
 import { jsPDF } from "jspdf"
+import fs from "node:fs"
+import path from "node:path"
 
 interface ReportData {
+  reportId: string
   inspectionInstance: {
     id: string
+    createdAt: string
     dueDate: string
     completedAt: string
     masterTemplate: {
@@ -22,6 +26,7 @@ interface ReportData {
   }
   reportItems: Array<{
     checklistItem: {
+      id: string
       name: string
       description?: string
       location?: string
@@ -35,261 +40,143 @@ interface ReportData {
 export async function generateInspectionPDF(reportData: ReportData): Promise<Uint8Array> {
   const doc = new jsPDF()
   let yPosition = 20
-  const pageHeight = doc.internal.pageSize.height
   const pageWidth = doc.internal.pageSize.width
+  const pageHeight = doc.internal.pageSize.height
   const margin = 20
 
-  // Helper function to check if we need a new page
-  const checkNewPage = (requiredSpace = 10) => {
-    if (yPosition + requiredSpace > pageHeight - 30) {
+  const checkNewPage = (space = 10) => {
+    if (yPosition + space > pageHeight - 30) {
       doc.addPage()
-      yPosition = 20
-      return true
+      yPosition = margin
     }
-    return false
   }
 
-  // Helper function to add text with word wrapping
-  const addWrappedText = (text: string, x: number, y: number, maxWidth: number, fontSize = 10) => {
-    doc.setFontSize(fontSize)
-    const lines = doc.splitTextToSize(text, maxWidth)
-    doc.text(lines, x, y)
-    return lines.length * (fontSize * 0.4) // Return height used
-  }
-
-  // Header
-  doc.setFontSize(20)
-  doc.setFont("helvetica", "bold")
-  doc.text("INSPECTION REPORT", margin, yPosition)
-  yPosition += 20
-
-  // Draw header line
-  doc.setLineWidth(0.5)
-  doc.line(margin, yPosition - 5, pageWidth - margin, yPosition - 5)
-  yPosition += 10
-
-  // Inspection Details
-  doc.setFontSize(12)
-  doc.setFont("helvetica", "bold")
-  doc.text("INSPECTION DETAILS", margin, yPosition)
-  yPosition += 10
-
-  doc.setFont("helvetica", "normal")
-  doc.setFontSize(10)
-
-  const completedDate = new Date(reportData.inspectionInstance.completedAt)
-  const dueDate = new Date(reportData.inspectionInstance.dueDate)
-
-  // Format dates in Danish format
-  const completedDateStr = completedDate.toLocaleDateString("da-DK", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
+  const start = new Date(reportData.inspectionInstance.createdAt)
+  const end = new Date(reportData.inspectionInstance.completedAt)
+  const dateStr = start.toLocaleDateString("da-DK")
+  const startStr = start.toLocaleTimeString("da-DK", {
     hour: "2-digit",
     minute: "2-digit",
   })
-
-  const dueDateStr = dueDate.toLocaleDateString("da-DK", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
+  const endStr = end.toLocaleTimeString("da-DK", {
+    hour: "2-digit",
+    minute: "2-digit",
   })
+  const durationMs = end.getTime() - start.getTime()
+  const durationMin = Math.max(0, Math.round(durationMs / 60000))
+  const durationStr =
+    durationMin < 60
+      ? `${durationMin} minutes`
+      : `${Math.floor(durationMin / 60)}h ${durationMin % 60}m`
 
-  // Basic Information
-  const details = [
-    `Template: ${reportData.inspectionInstance.masterTemplate.name}`,
-    `Inspector: ${reportData.inspectionInstance.inspector.name || reportData.inspectionInstance.inspector.email}`,
-    `Department: ${reportData.inspectionInstance.department.name}`,
-    ...(reportData.inspectionInstance.department.area
-      ? [`Area: ${reportData.inspectionInstance.department.area.name}`]
-      : []),
-    `Due Date: ${dueDateStr}`,
-    `Completed: ${completedDateStr}`,
+  const location = reportData.inspectionInstance.department.area
+    ? `${reportData.inspectionInstance.department.name} - ${reportData.inspectionInstance.department.area.name}`
+    : reportData.inspectionInstance.department.name
+
+  const inspectorName =
+    reportData.inspectionInstance.inspector.name || reportData.inspectionInstance.inspector.email
+
+  // Header
+  doc.setFontSize(18)
+  doc.setFont("helvetica", "bold")
+  doc.text("REPORT", margin, yPosition)
+  doc.setFontSize(14)
+  doc.setFont("helvetica", "normal")
+  doc.text(reportData.inspectionInstance.masterTemplate.name, margin, yPosition + 8)
+
+  try {
+    const logoPath = path.join(process.cwd(), "public", "placeholder-logo.png")
+    const logoData = fs.readFileSync(logoPath)
+    const base64 = logoData.toString("base64")
+    doc.addImage(base64, "PNG", pageWidth - margin - 30, yPosition - 5, 30, 15)
+  } catch {
+    // ignore if logo is missing
+  }
+
+  yPosition += 25
+  doc.setLineWidth(0.5)
+  doc.line(margin, yPosition - 5, pageWidth - margin, yPosition - 5)
+  yPosition += 5
+
+  // Metadata
+  const meta: Array<[string, string]> = [
+    ["Report ID", reportData.reportId],
+    ["Date", dateStr],
+    ["Start Time", startStr],
+    ["End Time", endStr],
+    ["Duration", durationStr],
+    ["Location", location],
+    ["Inspector", inspectorName],
   ]
 
-  details.forEach((detail) => {
-    checkNewPage()
-    doc.text(detail, margin, yPosition)
+  doc.setFontSize(10)
+  meta.forEach(([label, value]) => {
+    checkNewPage(6)
+    doc.setFont("helvetica", "bold")
+    doc.text(`${label}:`, margin, yPosition)
+    doc.setFont("helvetica", "normal")
+    doc.text(value, margin + 40, yPosition)
     yPosition += 6
   })
 
   yPosition += 10
-
-  // Summary Section
-  checkNewPage(30)
-  const approvedCount = reportData.reportItems.filter((item) => item.approved).length
-  const totalCount = reportData.reportItems.length
-  const notApprovedCount = totalCount - approvedCount
-
   doc.setFont("helvetica", "bold")
   doc.setFontSize(12)
-  doc.text("SUMMARY", margin, yPosition)
+  doc.text("INSPECTION OVERVIEW", margin, yPosition)
   yPosition += 10
 
-  doc.setFont("helvetica", "normal")
-  doc.setFontSize(10)
+  const colWidths = [10, 25, 15, 50, 25, 20, 35]
+  const headers = ["No", "ID", "Image", "Description", "Location", "Status", "Note"]
+  const colX: number[] = []
+  let pos = margin
+  colWidths.forEach((w) => {
+    colX.push(pos)
+    pos += w
+  })
 
-  // Summary box
-  const summaryBoxHeight = 25
-  doc.setDrawColor(200, 200, 200)
-  doc.setFillColor(248, 249, 250)
-  doc.rect(margin, yPosition, pageWidth - 2 * margin, summaryBoxHeight, "FD")
-
-  yPosition += 8
-  doc.setTextColor(0, 128, 0) // Green
-  doc.text(`✓ Approved: ${approvedCount}`, margin + 10, yPosition)
-  yPosition += 6
-
-  if (notApprovedCount > 0) {
-    doc.setTextColor(255, 0, 0) // Red
-    doc.text(`✗ Not Approved: ${notApprovedCount}`, margin + 10, yPosition)
-    yPosition += 6
-  }
-
-  doc.setTextColor(0, 0, 0) // Reset to black
-  doc.text(`Total Items: ${totalCount}`, margin + 10, yPosition)
-  yPosition += 15
-
-  // Checklist Results Section
-  checkNewPage(40)
-  doc.setFont("helvetica", "bold")
-  doc.setFontSize(12)
-  doc.text("CHECKLIST RESULTS", margin, yPosition)
-  yPosition += 15
-
-  // Table header
-  doc.setFont("helvetica", "bold")
-  doc.setFontSize(9)
   doc.setFillColor(66, 139, 202)
   doc.setTextColor(255, 255, 255)
-  doc.rect(margin, yPosition - 5, pageWidth - 2 * margin, 10, "F")
-
-  const colWidths = [15, 60, 40, 30, 45]
-  const colPositions = [margin + 2, margin + 17, margin + 77, margin + 117, margin + 147]
-  const headers = ["#", "Item", "Location", "Status", "Comments"]
-
-  headers.forEach((header, index) => {
-    doc.text(header, colPositions[index], yPosition)
+  doc.rect(margin, yPosition - 5, pos - margin, 8, "F")
+  headers.forEach((h, i) => {
+    doc.text(h, colX[i] + 1, yPosition)
   })
-
-  yPosition += 10
   doc.setTextColor(0, 0, 0)
+  yPosition += 8
+
+  doc.setFontSize(9)
   doc.setFont("helvetica", "normal")
+  reportData.reportItems.forEach((item, idx) => {
+    checkNewPage(8)
+    const statusIcon = item.approved ? "✓" : "✗"
+    const statusColor = item.approved ? [0, 128, 0] : [255, 0, 0]
 
-  // Table rows
-  reportData.reportItems.forEach((item, index) => {
-    checkNewPage(15)
-
-    const rowHeight = 12
-    const statusText = item.approved ? "✓ APPROVED" : "✗ NOT APPROVED"
-    const location = item.checklistItem.location || "-"
-    const comments = item.comments || "-"
-
-    // Alternate row colors
-    if (index % 2 === 0) {
-      doc.setFillColor(248, 249, 250)
-      doc.rect(margin, yPosition - 3, pageWidth - 2 * margin, rowHeight, "F")
-    }
-
-    // Row data
-    doc.text((index + 1).toString(), colPositions[0], yPosition + 3)
-
-    // Item name (with wrapping)
-    const itemLines = doc.splitTextToSize(item.checklistItem.name, colWidths[1] - 5)
-    doc.text(itemLines[0], colPositions[1], yPosition + 3)
-
-    // Location
-    const locationLines = doc.splitTextToSize(location, colWidths[2] - 5)
-    doc.text(locationLines[0], colPositions[2], yPosition + 3)
-
-    // Status (with color)
-    if (item.approved) {
-      doc.setTextColor(0, 128, 0)
-    } else {
-      doc.setTextColor(255, 0, 0)
-    }
-    doc.text(statusText, colPositions[3], yPosition + 3)
+    doc.text(String(idx + 1), colX[0] + 1, yPosition)
+    doc.text(item.checklistItem.id.slice(0, 8), colX[1] + 1, yPosition)
+    doc.text(item.imageUrl ? "Ja" : "Nej", colX[2] + 1, yPosition)
+    doc.text(item.checklistItem.name, colX[3] + 1, yPosition)
+    doc.text(item.checklistItem.location || "-", colX[4] + 1, yPosition)
+    doc.setTextColor(...statusColor)
+    doc.text(statusIcon, colX[5] + 1, yPosition)
     doc.setTextColor(0, 0, 0)
-
-    // Comments
-    const commentLines = doc.splitTextToSize(comments, colWidths[4] - 5)
-    doc.text(commentLines[0], colPositions[4], yPosition + 3)
-
-    yPosition += rowHeight
+    doc.text(item.comments || "-", colX[6] + 1, yPosition)
+    yPosition += 6
   })
 
-  // Detailed Comments Section
-  const itemsWithComments = reportData.reportItems.filter((item) => item.comments && item.comments.trim().length > 0)
-
-  if (itemsWithComments.length > 0) {
-    yPosition += 20
-    checkNewPage(30)
-
-    doc.setFont("helvetica", "bold")
-    doc.setFontSize(12)
-    doc.text("DETAILED COMMENTS", margin, yPosition)
-    yPosition += 15
-
-    doc.setFont("helvetica", "normal")
-    doc.setFontSize(10)
-
-    itemsWithComments.forEach((item, index) => {
-      checkNewPage(25)
-
-      const statusIcon = item.approved ? "✓" : "✗"
-      const statusColor = item.approved ? [0, 128, 0] : [255, 0, 0]
-
-      // Item header
-      doc.setTextColor(...statusColor)
-      doc.setFont("helvetica", "bold")
-      doc.text(`${statusIcon} ${item.checklistItem.name}`, margin, yPosition)
-      yPosition += 8
-
-      doc.setTextColor(0, 0, 0)
-      doc.setFont("helvetica", "normal")
-
-      if (item.checklistItem.location) {
-        doc.text(`Location: ${item.checklistItem.location}`, margin + 5, yPosition)
-        yPosition += 6
-      }
-
-      // Comments with wrapping
-      const commentHeight = addWrappedText(
-        `Comments: ${item.comments}`,
-        margin + 5,
-        yPosition,
-        pageWidth - 2 * margin - 10,
-      )
-      yPosition += commentHeight + 8
-
-      // Separator line
-      if (index < itemsWithComments.length - 1) {
-        doc.setDrawColor(200, 200, 200)
-        doc.line(margin, yPosition, pageWidth - margin, yPosition)
-        yPosition += 5
-      }
-    })
-  }
-
-  // Footer on all pages
   const pageCount = doc.getNumberOfPages()
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i)
+    const h = doc.internal.pageSize.height
     doc.setFontSize(8)
     doc.setTextColor(100, 100, 100)
-
-    // Footer line
-    doc.setDrawColor(200, 200, 200)
-    doc.line(margin, pageHeight - 20, pageWidth - margin, pageHeight - 20)
-
-    // Footer text
+    const footerY = h - 20
     doc.text(
-      `Generated: ${new Date().toLocaleString("da-DK")} | Inspection ID: ${reportData.inspectionInstance.id.substring(0, 8)}...`,
+      `This report was completed and submitted by ${inspectorName}. The inspection was carried out in accordance with the applicable regulations and guidelines for fire safety equipment, and the information provided in this report is given under full responsibility.`,
       margin,
-      pageHeight - 12,
+      footerY,
+      { maxWidth: pageWidth - 2 * margin }
     )
-
-    doc.text(`Page ${i} of ${pageCount}`, pageWidth - 40, pageHeight - 12)
+    doc.text(`Digitally finalized: ${dateStr} kl. ${endStr}`, margin, footerY + 8)
+    doc.text(`Page ${i} of ${pageCount}`, pageWidth - margin - 30, footerY + 8)
   }
 
   return doc.output("arraybuffer") as Uint8Array

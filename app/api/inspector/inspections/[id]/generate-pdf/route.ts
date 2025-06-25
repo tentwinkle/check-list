@@ -66,8 +66,10 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
     // Generate PDF
     const pdfBuffer = await generateInspectionPDF({
+      reportId: inspection.report.id,
       inspectionInstance: {
         id: inspection.id,
+        createdAt: inspection.createdAt.toISOString(),
         dueDate: inspection.dueDate.toISOString(),
         completedAt: inspection.completedAt?.toISOString() || new Date().toISOString(),
         masterTemplate: {
@@ -89,6 +91,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       },
       reportItems: inspection.report.reportItems.map((item) => ({
         checklistItem: {
+          id: item.checklistItem.id,
           name: item.checklistItem.name,
           description: item.checklistItem.description,
           location: item.checklistItem.location,
