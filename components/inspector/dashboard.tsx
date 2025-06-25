@@ -40,6 +40,13 @@ export function InspectorDashboard() {
 
   useEffect(() => {
     fetchInspections();
+    const interval = setInterval(fetchInspections, 30000);
+    const handleRefresh = () => fetchInspections();
+    window.addEventListener("inspection-created", handleRefresh);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("inspection-created", handleRefresh);
+    };
   }, []);
 
   const fetchInspections = async () => {
