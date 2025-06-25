@@ -94,9 +94,10 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       return NextResponse.json({ error: "Department not found" }, { status: 404 })
     }
 
-    await prisma.department.delete({
-      where: { id: params.id },
-    })
+    await prisma.$transaction([
+      prisma.user.deleteMany({ where: { departmentId: params.id } }),
+      prisma.department.delete({ where: { id: params.id } }),
+    ])
 
     await createAuditLog(session.user.id, "DELETE_DEPARTMENT", "Department", params.id)
 

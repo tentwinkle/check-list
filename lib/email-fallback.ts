@@ -1,10 +1,12 @@
 // Fallback email service for development/testing
 export async function sendPasswordResetEmailFallback(email: string, resetToken: string) {
   const resetUrl = `${process.env.NEXTAUTH_URL}/auth/reset-password?token=${resetToken}`
+  const loginUrl = `${process.env.NEXTAUTH_URL}/auth/signin`
 
   console.log("=== PASSWORD RESET EMAIL ===")
   console.log(`To: ${email}`)
   console.log(`Reset URL: ${resetUrl}`)
+  console.log(`Login URL: ${loginUrl}`)
   console.log("============================")
 
   // In development, you can copy this URL and use it directly
