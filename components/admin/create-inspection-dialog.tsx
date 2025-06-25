@@ -120,6 +120,7 @@ export function CreateInspectionDialog({ open, onOpenChange, onSuccess }: Create
         })
         onOpenChange(false)
         onSuccess()
+        window.dispatchEvent(new Event("inspection-created"))
       } else {
         const error = await response.json()
         toast({
