@@ -24,6 +24,7 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const templateId = searchParams.get("templateId")
+    const format = searchParams.get("format")
 
     if (!templateId) {
       return NextResponse.json({ message: "Template ID is required" }, { status: 400 })
@@ -39,6 +40,28 @@ export async function GET(request: NextRequest) {
 
     if (templateItems.length === 0) {
       return NextResponse.json({ message: "No template items found" }, { status: 404 })
+    }
+
+    if (format === "json") {
+      const itemsWithQR = await Promise.all(
+        templateItems.map(async (item) => {
+          const qrCodeUrl = await QRCode.toDataURL(item.qrCodeId, {
+            width: 300,
+            margin: 2,
+            color: {
+              dark: "#000000",
+              light: "#FFFFFF",
+            },
+          })
+
+          return {
+            ...item,
+            qrCodeUrl,
+          }
+        }),
+      )
+
+      return NextResponse.json(itemsWithQR)
     }
 
     // Create ZIP file with all QR codes
