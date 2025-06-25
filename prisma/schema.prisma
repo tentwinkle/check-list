@@ -158,6 +158,8 @@ model InspectionInstance {
   inspector      User              @relation(fields: [inspectorId], references: [id])
   department     Department        @relation(fields: [departmentId], references: [id])
   report         InspectionReport?
+
+  @@index([status, dueDate])
 }
 
 model InspectionReport {
