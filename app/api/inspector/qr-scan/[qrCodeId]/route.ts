@@ -65,3 +65,5 @@ export async function GET(request: Request, { params }: { params: { qrCodeId: st
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
+
+export const dynamic = "force-dynamic";

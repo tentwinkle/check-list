@@ -83,3 +83,5 @@ export async function GET(request: Request, { params }: { params: { id: string }
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
+
+export const dynamic = "force-dynamic";

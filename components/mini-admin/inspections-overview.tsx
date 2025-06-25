@@ -38,6 +38,10 @@ export function MiniAdminInspectionsOverview({ onUpdate }: InspectionsOverviewPr
 
   useEffect(() => {
     fetchInspections()
+    window.addEventListener("inspection-created", fetchInspections)
+    return () => {
+      window.removeEventListener("inspection-created", fetchInspections)
+    }
   }, [])
 
   const fetchInspections = async () => {
