@@ -32,9 +32,10 @@ interface TemplateItemsListProps {
   templateId: string
   items: TemplateItem[]
   onUpdate: () => void
+  onShowQR: (item: TemplateItem) => void
 }
 
-export function TemplateItemsList({ templateId, items, onUpdate }: TemplateItemsListProps) {
+export function TemplateItemsList({ templateId, items, onUpdate, onShowQR }: TemplateItemsListProps) {
   const [editingItem, setEditingItem] = useState<TemplateItem | null>(null)
   const [loading, setLoading] = useState<string | null>(null)
   const { toast } = useToast()
@@ -103,30 +104,6 @@ export function TemplateItemsList({ templateId, items, onUpdate }: TemplateItems
     }
   }
 
-  const handleDownloadQR = async (itemId: string, title: string) => {
-    try {
-      const response = await fetch(`/api/mini-admin/template-items/qr-codes/${itemId}/download`)
-      if (response.ok) {
-        const blob = await response.blob()
-        const url = window.URL.createObjectURL(blob)
-        const a = document.createElement("a")
-        a.href = url
-        a.download = `${title.replace(/[^a-z0-9]/gi, "_").toLowerCase()}-qr.png`
-        document.body.appendChild(a)
-        a.click()
-        window.URL.revokeObjectURL(url)
-        document.body.removeChild(a)
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to download QR code",
-        variant: "destructive",
-      })
-    }
-  }
-
-
   if (items.length === 0) {
     return (
       <div className="text-center py-8 text-gray-500">
@@ -185,7 +162,7 @@ export function TemplateItemsList({ templateId, items, onUpdate }: TemplateItems
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => handleDownloadQR(item.id, item.name)}
+                  onClick={() => onShowQR(item)}
                 >
                   <QrCode className="h-4 w-4" />
                 </Button>
