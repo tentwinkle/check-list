@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
 import { Loader2, Calendar, User, FileText } from "lucide-react"
-import { addDays, format } from "date-fns"
+import { format } from "date-fns"
 
 interface CreateInspectionDialogProps {
   open: boolean
@@ -44,7 +44,7 @@ export function CreateInspectionDialog({ open, onOpenChange, onSuccess }: Create
   const [formData, setFormData] = useState({
     templateId: "",
     inspectorId: "",
-    dueDate: format(addDays(new Date(), 7), "yyyy-MM-dd"),
+    dueDate: format(new Date(), "yyyy-MM-dd"),
   })
   const { toast } = useToast()
 
@@ -116,7 +116,7 @@ export function CreateInspectionDialog({ open, onOpenChange, onSuccess }: Create
         setFormData({
           templateId: "",
           inspectorId: "",
-          dueDate: format(addDays(new Date(), 7), "yyyy-MM-dd"),
+          dueDate: format(new Date(), "yyyy-MM-dd"),
         })
         onOpenChange(false)
         onSuccess()
