@@ -12,84 +12,94 @@ export async function createScheduledInspections() {
       },
     })
 
-    for (const template of templates) {
-      // Find the last completed inspection for this template
-      const lastInspection = await prisma.inspectionInstance.findFirst({
-        where: {
-          masterTemplateId: template.id,
-          status: "COMPLETED",
-        },
-        orderBy: {
-          completedAt: "desc",
-        },
-      })
-
-      // Calculate next due date
-      let nextDueDate: Date
-      if (lastInspection && lastInspection.completedAt) {
-        nextDueDate = addDays(new Date(lastInspection.completedAt), template.frequency)
-      } else {
-        // If no previous inspection, start from today
-        nextDueDate = addDays(new Date(), template.frequency)
-      }
-
-      // Check if we need to create a new inspection
-      const existingPendingInspection = await prisma.inspectionInstance.findFirst({
-        where: {
-          masterTemplateId: template.id,
-          status: {
-            in: ["PENDING", "IN_PROGRESS"],
-          },
-        },
-      })
-
-      // Only create if no pending inspection exists and due date is within next 7 days
-      if (!existingPendingInspection && nextDueDate <= addDays(new Date(), 7)) {
-        // Find available inspectors in the same organization
-        const availableInspectors = await prisma.user.findMany({
-          where: {
-            organizationId: template.organizationId,
-            role: "INSPECTOR",
-            // Optionally filter by department if template has one
-            ...(template.departmentId && {
-              departmentId: template.departmentId,
-            }),
-          },
-        })
-
-        if (availableInspectors.length > 0) {
-          // Assign to inspector with least pending inspections
-          const inspectorWorkload = await Promise.all(
-            availableInspectors.map(async (inspector) => {
-              const pendingCount = await prisma.inspectionInstance.count({
-                where: {
-                  inspectorId: inspector.id,
-                  status: {
-                    in: ["PENDING", "IN_PROGRESS"],
-                  },
-                },
-              })
-              return { inspector, pendingCount }
-            }),
-          )
-
-          const assignedInspector = inspectorWorkload.sort((a, b) => a.pendingCount - b.pendingCount)[0].inspector
-
-          // Create the inspection - FIXED: removed organizationId
-          await prisma.inspectionInstance.create({
-            data: {
+    // Process templates concurrently to avoid sequential awaits
+    await Promise.all(
+      templates.map(async (template) => {
+        const [lastInspection, existingPendingInspection] = await Promise.all([
+          // Last completed inspection for due date calculation
+          prisma.inspectionInstance.findFirst({
+            where: {
               masterTemplateId: template.id,
-              inspectorId: assignedInspector.id,
-              departmentId: template.departmentId || assignedInspector.departmentId!,
-              dueDate: nextDueDate,
-              status: "PENDING",
+              status: "COMPLETED",
+            },
+            orderBy: {
+              completedAt: "desc",
+            },
+          }),
+          // See if there is a currently pending inspection
+          prisma.inspectionInstance.findFirst({
+            where: {
+              masterTemplateId: template.id,
+              status: {
+                in: ["PENDING", "IN_PROGRESS"],
+              },
+            },
+          }),
+        ])
+
+        // Determine the next due date based on last completed inspection
+        let nextDueDate: Date
+        if (lastInspection && lastInspection.completedAt) {
+          nextDueDate = addDays(new Date(lastInspection.completedAt), template.frequency)
+        } else {
+          nextDueDate = addDays(new Date(), template.frequency)
+        }
+
+        // Create a new inspection only when no pending inspection exists and due date is near
+        if (!existingPendingInspection && nextDueDate <= addDays(new Date(), 7)) {
+          // Inspectors belonging to the same organization/department
+          const availableInspectors = await prisma.user.findMany({
+            where: {
+              organizationId: template.organizationId,
+              role: "INSPECTOR",
+              ...(template.departmentId && { departmentId: template.departmentId }),
             },
           })
 
-          console.log(`Created inspection for template ${template.name}, assigned to ${assignedInspector.email}`)
+          if (availableInspectors.length > 0) {
+            const inspectorIds = availableInspectors.map((i) => i.id)
+
+            // Fetch pending inspection counts for all inspectors in one query
+            const counts = await prisma.inspectionInstance.groupBy({
+              by: ["inspectorId"],
+              where: {
+                inspectorId: { in: inspectorIds },
+                status: { in: ["PENDING", "IN_PROGRESS"] },
+              },
+              _count: { inspectorId: true },
+            })
+
+            const countMap = new Map<string, number>()
+            counts.forEach((c) => countMap.set(c.inspectorId, c._count.inspectorId))
+
+            // Choose inspector with the least amount of pending work
+            const inspectorWorkload = availableInspectors.map((inspector) => ({
+              inspector,
+              pendingCount: countMap.get(inspector.id) ?? 0,
+            }))
+
+            const assignedInspector = inspectorWorkload.sort(
+              (a, b) => a.pendingCount - b.pendingCount,
+            )[0].inspector
+
+            // Create the inspection - FIXED: removed organizationId
+            await prisma.inspectionInstance.create({
+              data: {
+                masterTemplateId: template.id,
+                inspectorId: assignedInspector.id,
+                departmentId: template.departmentId || assignedInspector.departmentId!,
+                dueDate: nextDueDate,
+                status: "PENDING",
+              },
+            })
+
+            console.log(
+              `Created inspection for template ${template.name}, assigned to ${assignedInspector.email}`,
+            )
+          }
         }
-      }
-    }
+      }),
+    )
   } catch (error) {
     console.error("Error creating scheduled inspections:", error)
   }
