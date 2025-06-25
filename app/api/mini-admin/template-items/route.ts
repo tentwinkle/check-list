@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Area not found" }, { status: 400 })
     }
 
-    const { templateId, title, description } = await request.json()
+    const { templateId, name, description, location } = await request.json()
 
     // Verify template belongs to area
     const template = await prisma.masterTemplate.findFirst({
@@ -104,8 +104,9 @@ export async function POST(request: NextRequest) {
 
     const item = await prisma.checklistItem.create({
       data: {
-        name: title,
+        name,
         description,
+        location,
         order: nextOrder,
         qrCodeId,
         masterTemplateId: templateId,

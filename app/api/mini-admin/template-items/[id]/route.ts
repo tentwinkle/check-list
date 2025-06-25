@@ -40,19 +40,20 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ error: "Template item not found" }, { status: 404 })
     }
 
-    const { title, description, type, isRequired, expectedValue } = await request.json()
+    const { name, description, location } = await request.json()
 
-    // Generate new QR code ID if title changed
+    // Generate new QR code ID if name changed
     let qrCodeId = existingItem.qrCodeId
-    if (title !== existingItem.name) {
+    if (name !== existingItem.name) {
       qrCodeId = generateShortId()
     }
 
     const item = await prisma.checklistItem.update({
       where: { id: params.id },
       data: {
-        name: title, // Use 'name' field instead of 'title'
+        name,
         description,
+        location,
         qrCodeId,
       },
     })
