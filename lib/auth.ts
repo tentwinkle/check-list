@@ -110,5 +110,5 @@ export const authOptions: NextAuthOptions = {
     signIn: "/auth/signin",
     error: "/auth/error",
   },
-  debug: process.env.NODE_ENV === "production",
+  debug: process.env.NODE_ENV === "development",
 }
