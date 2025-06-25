@@ -74,7 +74,10 @@ export function QRCodeDialog({ open, onOpenChange, templateId, selectedItem }: Q
     window.print()
   }
 
-  const itemsToShow = selectedItem ? [selectedItem] : items
+  const selectedFromList = selectedItem
+    ? items.find((it) => it.id === selectedItem.id) || selectedItem
+    : null
+  const itemsToShow = selectedItem ? [selectedFromList] : items
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

@@ -22,6 +22,7 @@ export function QRScanner({ open, onClose }: QRScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
+  const detectorRef = useRef<any>(null)
   const { toast } = useToast()
   const router = useRouter()
 
@@ -66,6 +67,15 @@ export function QRScanner({ open, onClose }: QRScannerProps) {
         videoRef.current.srcObject = stream
         streamRef.current = stream
         setScanning(true)
+        if ("BarcodeDetector" in window) {
+          try {
+            detectorRef.current = new (window as any).BarcodeDetector({
+              formats: ["qr_code"],
+            })
+          } catch (e) {
+            console.error("Failed to create BarcodeDetector", e)
+          }
+        }
 
         // Start scanning for QR codes
         scanForQRCode()
@@ -89,7 +99,7 @@ export function QRScanner({ open, onClose }: QRScannerProps) {
     setScanning(false)
   }
 
-  const scanForQRCode = () => {
+  const scanForQRCode = async () => {
     if (!videoRef.current || !canvasRef.current || !scanning) return
 
     const video = videoRef.current
@@ -97,7 +107,7 @@ export function QRScanner({ open, onClose }: QRScannerProps) {
     const context = canvas.getContext("2d")
 
     if (!context || video.readyState !== video.HAVE_ENOUGH_DATA) {
-      setTimeout(scanForQRCode, 100)
+      requestAnimationFrame(scanForQRCode)
       return
     }
 
@@ -106,14 +116,18 @@ export function QRScanner({ open, onClose }: QRScannerProps) {
     context.drawImage(video, 0, 0, canvas.width, canvas.height)
 
     try {
-      const imageData = context.getImageData(0, 0, canvas.width, canvas.height)
-      // Simple QR code detection - in a real app, you'd use a library like jsQR
-      // For now, we'll simulate detection and let users input manually
-      setTimeout(scanForQRCode, 100)
+      if (detectorRef.current) {
+        const codes = await detectorRef.current.detect(canvas)
+        if (codes.length > 0 && codes[0].rawValue) {
+          handleQRCodeFound(codes[0].rawValue)
+          return
+        }
+      }
     } catch (error) {
       console.error("Error scanning QR code:", error)
-      setTimeout(scanForQRCode, 100)
     }
+
+    requestAnimationFrame(scanForQRCode)
   }
 
   const handleQRCodeFound = async (qrCodeId: string) => {
@@ -212,7 +226,7 @@ export function QRScanner({ open, onClose }: QRScannerProps) {
                   id="manual-code"
                   value={manualCode}
                   onChange={(e) => setManualCode(e.target.value)}
-                  placeholder="Enter QR code (e.g., abc123def456)"
+                  placeholder="Enter QR code (e.g., A1B2C3D4)"
                   onKeyDown={(e) => e.key === "Enter" && handleManualSubmit()}
                 />
               </div>
