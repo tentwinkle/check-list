@@ -60,32 +60,41 @@ export function InspectionInterface({ inspectionId }: InspectionInterfaceProps) 
   const searchParams = useSearchParams()
 
   useEffect(() => {
-    fetchInspection().then(() => {
-      // Handle QR code navigation
+    const initialize = async () => {
+      const data = await fetchInspection()
+      if (!data) return
+
+      // Handle QR code navigation after inspection is loaded
       const itemParam = searchParams.get("item")
-      if (itemParam && inspection) {
-        const itemIndex = inspection.checklistItems.findIndex((item) => item.id === itemParam)
+      if (itemParam) {
+        const itemIndex = data.checklistItems.findIndex((item) => item.id === itemParam)
         if (itemIndex !== -1) {
           setCurrentItemIndex(itemIndex)
         }
       }
-    })
+    }
+
+    initialize()
   }, [inspectionId, searchParams])
 
-  const fetchInspection = async () => {
+  const fetchInspection = async (): Promise<InspectionData | null> => {
     try {
       const response = await fetch(`/api/inspector/inspections/${inspectionId}`)
       if (response.ok) {
-        const data = await response.json()
+        const data: InspectionData = await response.json()
         setInspection(data)
-      } else {
-        toast({
-          title: "Error",
-          description: "Failed to load inspection",
-          variant: "destructive",
-        })
-        router.push("/inspector")
+        return data
       }
+
+      // Handle non-OK responses
+      const error = await response.json().catch(() => ({}))
+      toast({
+        title: "Error",
+        description: error.message || "Failed to load inspection",
+        variant: "destructive",
+      })
+      router.push("/inspector")
+      return null
     } catch (error) {
       console.error("Failed to fetch inspection:", error)
       toast({
@@ -93,6 +102,8 @@ export function InspectionInterface({ inspectionId }: InspectionInterfaceProps) 
         description: "An unexpected error occurred",
         variant: "destructive",
       })
+      router.push("/inspector")
+      return null
     } finally {
       setLoading(false)
     }
