@@ -21,6 +21,7 @@ export async function sendPasswordResetEmail(email: string, resetToken: string) 
   }
 
   const resetUrl = `${process.env.NEXTAUTH_URL}/auth/reset-password?token=${resetToken}`
+  const loginUrl = `${process.env.NEXTAUTH_URL}/auth/signin`
 
   const mailOptions = {
     from: process.env.SMTP_FROM,
@@ -32,6 +33,8 @@ export async function sendPasswordResetEmail(email: string, resetToken: string) 
         <p>You have been added to the Inspection System. Please click the link below to set your password:</p>
         <a href="${resetUrl}" style="display: inline-block; padding: 12px 24px; background-color: #007bff; color: white; text-decoration: none; border-radius: 4px; margin: 20px 0;">Set Password</a>
         <p>If you didn't request this, please ignore this email.</p>
+        <p>After resetting your password you can log in here:</p>
+        <a href="${loginUrl}" style="display: inline-block; padding: 12px 24px; background-color: #28a745; color: white; text-decoration: none; border-radius: 4px;">Login</a>
         <p>This link will expire in 24 hours.</p>
       </div>
     `,

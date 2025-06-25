@@ -76,9 +76,10 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       return NextResponse.json({ error: "Area not found" }, { status: 404 })
     }
 
-    await prisma.area.delete({
-      where: { id: params.id },
-    })
+    await prisma.$transaction([
+      prisma.user.deleteMany({ where: { areaId: params.id } }),
+      prisma.area.delete({ where: { id: params.id } }),
+    ])
 
     return NextResponse.json({
       message: "Area deleted successfully",

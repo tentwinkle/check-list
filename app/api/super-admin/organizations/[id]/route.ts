@@ -40,9 +40,10 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    await prisma.organization.delete({
-      where: { id: params.id },
-    })
+    await prisma.$transaction([
+      prisma.user.deleteMany({ where: { organizationId: params.id } }),
+      prisma.organization.delete({ where: { id: params.id } }),
+    ])
 
     return NextResponse.json({
       message: "Organization deleted successfully",

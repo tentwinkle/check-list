@@ -59,13 +59,16 @@ export async function POST(request: NextRequest) {
 
     const { areaName, areaDescription, leaderName, leaderEmail } = await request.json()
 
-    // Check if email already exists
-    const existingUser = await prisma.user.findUnique({
-      where: { email: leaderEmail },
-    })
+    let existingUser = null
+    if (leaderEmail) {
+      // Check if email already exists (case-insensitive)
+      existingUser = await prisma.user.findFirst({
+        where: { email: { equals: leaderEmail, mode: "insensitive" } },
+      })
 
-    if (existingUser) {
-      return NextResponse.json({ error: "Email already exists" }, { status: 400 })
+      if (existingUser) {
+        return NextResponse.json({ error: "Email already exists" }, { status: 400 })
+      }
     }
 
     // Create area and leader user in a transaction
@@ -78,32 +81,36 @@ export async function POST(request: NextRequest) {
           organizationId,
         },
       })
+      let leaderUser = null
+      let resetToken: string | null = null
 
-      // Generate temporary password and reset token
-      const tempPassword = Math.random().toString(36).slice(-8)
-      const hashedPassword = await bcrypt.hash(tempPassword, 12)
-      const resetToken = generateResetToken()
+      if (leaderEmail) {
+        // Generate temporary password and reset token
+        const tempPassword = Math.random().toString(36).slice(-8)
+        const hashedPassword = await bcrypt.hash(tempPassword, 12)
+        resetToken = generateResetToken()
 
-      // Create area leader
-      const leaderUser = await tx.user.create({
-        data: {
-          name: leaderName,
-          email: leaderEmail,
-          password: hashedPassword,
-          role: "MINI_ADMIN",
-          organizationId,
-          areaId: area.id,
-        },
-      })
+        // Create area leader
+        leaderUser = await tx.user.create({
+          data: {
+            name: leaderName,
+            email: leaderEmail,
+            password: hashedPassword,
+            role: "MINI_ADMIN",
+            organizationId,
+            areaId: area.id,
+          },
+        })
 
-      // Store reset token
-      await tx.verificationToken.create({
-        data: {
-          identifier: leaderEmail,
-          token: resetToken,
-          expires: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
-        },
-      })
+        // Store reset token
+        await tx.verificationToken.create({
+          data: {
+            identifier: leaderEmail,
+            token: resetToken,
+            expires: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
+          },
+        })
+      }
 
       return { area, leaderUser, resetToken }
     })
@@ -114,14 +121,16 @@ export async function POST(request: NextRequest) {
       select: { name: true },
     })
 
-    // Send account setup email
-    await sendAccountSetupEmail(
-      leaderEmail,
-      leaderName,
-      "Area Leader",
-      organization?.name || "Organization",
-      result.resetToken,
-    )
+    // Send account setup email if leader was created
+    if (leaderEmail && result.resetToken) {
+      await sendAccountSetupEmail(
+        leaderEmail,
+        leaderName,
+        "Area Leader",
+        organization?.name || "Organization",
+        result.resetToken,
+      )
+    }
 
     return NextResponse.json({
       message: "Area created successfully",
