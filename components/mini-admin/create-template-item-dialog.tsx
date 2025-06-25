@@ -1,15 +1,12 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Checkbox } from "@/components/ui/checkbox"
 import { useToast } from "@/hooks/use-toast"
 import { Loader2 } from "lucide-react"
 
@@ -18,7 +15,12 @@ interface CreateTemplateItemDialogProps {
   onOpenChange: (open: boolean) => void
   templateId: string
   onSuccess: () => void
-  editItem?: any
+  editItem?: {
+    id: string
+    name: string
+    description?: string
+    location?: string
+  }
 }
 
 export function CreateTemplateItemDialog({
@@ -30,11 +32,9 @@ export function CreateTemplateItemDialog({
 }: CreateTemplateItemDialogProps) {
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
-    title: editItem?.title || "",
+    name: editItem?.name || "",
     description: editItem?.description || "",
-    type: editItem?.type || "CHECKBOX",
-    isRequired: editItem?.isRequired || true,
-    expectedValue: editItem?.expectedValue || "",
+    location: editItem?.location || "",
   })
   const { toast } = useToast()
 
@@ -44,7 +44,6 @@ export function CreateTemplateItemDialog({
 
     try {
       const url = editItem ? `/api/mini-admin/template-items/${editItem.id}` : `/api/mini-admin/template-items`
-
       const method = editItem ? "PUT" : "POST"
 
       const response = await fetch(url, {
@@ -63,13 +62,7 @@ export function CreateTemplateItemDialog({
           title: "Success",
           description: `Template item ${editItem ? "updated" : "created"} successfully.`,
         })
-        setFormData({
-          title: "",
-          description: "",
-          type: "CHECKBOX",
-          isRequired: true,
-          expectedValue: "",
-        })
+        setFormData({ name: "", description: "", location: "" })
         onOpenChange(false)
         onSuccess()
       } else {
@@ -93,24 +86,24 @@ export function CreateTemplateItemDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>{editItem ? "Edit" : "Create"} Template Item</DialogTitle>
+          <DialogTitle>{editItem ? "Edit" : "Add"} Template Item</DialogTitle>
           <DialogDescription>
-            {editItem ? "Update the" : "Add a new"} checklist item to this inspection template.
+            {editItem ? "Update the" : "Add a new"} checklist item to this template.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="title">Item Title</Label>
+            <Label htmlFor="name">Item Name</Label>
             <Input
-              id="title"
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              placeholder="e.g., Check fire extinguisher pressure"
+              id="name"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               required
               disabled={loading}
+              placeholder="e.g., Check fire extinguisher"
             />
           </div>
 
@@ -120,59 +113,20 @@ export function CreateTemplateItemDialog({
               id="description"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Additional instructions or details..."
               disabled={loading}
+              placeholder="Detailed instructions for this check"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="type">Item Type</Label>
-            <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value })}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="CHECKBOX">Checkbox (Pass/Fail)</SelectItem>
-                <SelectItem value="TEXT">Text Input</SelectItem>
-                <SelectItem value="NUMBER">Number Input</SelectItem>
-                <SelectItem value="PHOTO">Photo Required</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {formData.type === "TEXT" && (
-            <div className="space-y-2">
-              <Label htmlFor="expectedValue">Expected Value (Optional)</Label>
-              <Input
-                id="expectedValue"
-                value={formData.expectedValue}
-                onChange={(e) => setFormData({ ...formData, expectedValue: e.target.value })}
-                placeholder="Expected text value"
-                disabled={loading}
-              />
-            </div>
-          )}
-
-          {formData.type === "NUMBER" && (
-            <div className="space-y-2">
-              <Label htmlFor="expectedValue">Expected Range (Optional)</Label>
-              <Input
-                id="expectedValue"
-                value={formData.expectedValue}
-                onChange={(e) => setFormData({ ...formData, expectedValue: e.target.value })}
-                placeholder="e.g., 10-50 or >20"
-                disabled={loading}
-              />
-            </div>
-          )}
-
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="isRequired"
-              checked={formData.isRequired}
-              onCheckedChange={(checked) => setFormData({ ...formData, isRequired: checked === true })}
+            <Label htmlFor="location">Location (Optional)</Label>
+            <Input
+              id="location"
+              value={formData.location}
+              onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+              disabled={loading}
+              placeholder="e.g., Main hallway, Room 101"
             />
-            <Label htmlFor="isRequired">This item is required</Label>
           </div>
 
           <div className="flex justify-end space-x-2">
@@ -181,7 +135,7 @@ export function CreateTemplateItemDialog({
             </Button>
             <Button type="submit" disabled={loading}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {editItem ? "Update" : "Create"} Item
+              {editItem ? "Update" : "Add"} Item
             </Button>
           </div>
         </form>

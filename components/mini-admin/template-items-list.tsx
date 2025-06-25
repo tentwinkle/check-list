@@ -3,7 +3,6 @@
 import { useState } from "react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { MoreHorizontal, Edit, Trash2, ChevronUp, ChevronDown, QrCode } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import {
@@ -22,13 +21,11 @@ import { useToast } from "@/hooks/use-toast"
 
 interface TemplateItem {
   id: string
-  name: string // Changed from 'title' to 'name'
+  name: string
   description?: string
-  type: string
-  isRequired: boolean
-  expectedValue?: string
+  location?: string
   order: number
-  qrCodeId: string // Use qrCodeId instead of qrCode
+  qrCodeId: string
 }
 
 interface TemplateItemsListProps {
@@ -129,35 +126,6 @@ export function TemplateItemsList({ templateId, items, onUpdate }: TemplateItems
     }
   }
 
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case "CHECKBOX":
-        return "bg-blue-100 text-blue-800"
-      case "TEXT":
-        return "bg-green-100 text-green-800"
-      case "NUMBER":
-        return "bg-purple-100 text-purple-800"
-      case "PHOTO":
-        return "bg-orange-100 text-orange-800"
-      default:
-        return "bg-gray-100 text-gray-800"
-    }
-  }
-
-  const getTypeLabel = (type: string) => {
-    switch (type) {
-      case "CHECKBOX":
-        return "Pass/Fail"
-      case "TEXT":
-        return "Text"
-      case "NUMBER":
-        return "Number"
-      case "PHOTO":
-        return "Photo"
-      default:
-        return type
-    }
-  }
 
   if (items.length === 0) {
     return (
@@ -174,12 +142,12 @@ export function TemplateItemsList({ templateId, items, onUpdate }: TemplateItems
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[50px]">Order</TableHead>
-            <TableHead>Title</TableHead>
-            <TableHead>Type</TableHead>
-            <TableHead>Required</TableHead>
-            <TableHead>Expected Value</TableHead>
-            <TableHead className="w-[100px]">Actions</TableHead>
+            <TableHead className="w-[60px]">Order</TableHead>
+            <TableHead>Name</TableHead>
+            <TableHead>Description</TableHead>
+            <TableHead>Location</TableHead>
+            <TableHead>QR Code</TableHead>
+            <TableHead className="w-[120px]">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -210,21 +178,18 @@ export function TemplateItemsList({ templateId, items, onUpdate }: TemplateItems
                   </div>
                 </div>
               </TableCell>
+              <TableCell className="font-medium">{item.name}</TableCell>
+              <TableCell>{item.description || "-"}</TableCell>
+              <TableCell>{item.location || "-"}</TableCell>
               <TableCell>
-                <div>
-                  <div className="font-medium">{item.name}</div> {/* Changed from item.title to item.name */}
-                  {item.description && <div className="text-sm text-gray-500 mt-1">{item.description}</div>}
-                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleDownloadQR(item.id, item.name)}
+                >
+                  <QrCode className="h-4 w-4" />
+                </Button>
               </TableCell>
-              <TableCell>
-                <Badge className={getTypeColor(item.type)}>{getTypeLabel(item.type)}</Badge>
-              </TableCell>
-              <TableCell>
-                <Badge variant={item.isRequired ? "default" : "secondary"}>
-                  {item.isRequired ? "Required" : "Optional"}
-                </Badge>
-              </TableCell>
-              <TableCell>{item.expectedValue || "-"}</TableCell>
               <TableCell>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -233,10 +198,6 @@ export function TemplateItemsList({ templateId, items, onUpdate }: TemplateItems
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => handleDownloadQR(item.id, item.name)}>
-                      <QrCode className="mr-2 h-4 w-4" />
-                      Download QR
-                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setEditingItem(item)}>
                       <Edit className="mr-2 h-4 w-4" />
                       Edit
