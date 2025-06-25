@@ -3,7 +3,17 @@ import { getServerSession } from "next-auth/next"
 import type { Session } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
-import { v4 as uuidv4 } from "uuid"
+import { randomBytes } from "crypto"
+
+function generateShortId(length = 8) {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+  const bytes = randomBytes(length)
+  let id = ""
+  for (let i = 0; i < length; i++) {
+    id += chars[bytes[i] % chars.length]
+  }
+  return id
+}
 
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -35,7 +45,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     // Generate new QR code ID if title changed
     let qrCodeId = existingItem.qrCodeId
     if (title !== existingItem.name) {
-      qrCodeId = uuidv4()
+      qrCodeId = generateShortId()
     }
 
     const item = await prisma.checklistItem.update({
