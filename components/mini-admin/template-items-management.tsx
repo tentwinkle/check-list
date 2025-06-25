@@ -123,7 +123,6 @@ export function MiniAdminTemplateItemsManagement({ templateId, templateName, onU
         onOpenChange={setShowQRDialog}
         templateId={templateId}
         templateName={templateName}
-        items={items}
       />
     </div>
   )

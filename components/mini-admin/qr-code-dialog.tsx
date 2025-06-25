@@ -1,8 +1,10 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Download } from "lucide-react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Download, Printer } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
 interface QRCodeDialogProps {
@@ -10,13 +12,43 @@ interface QRCodeDialogProps {
   onOpenChange: (open: boolean) => void
   templateId: string
   templateName: string
-  items: any[]
 }
 
-export function QRCodeDialog({ open, onOpenChange, templateId, templateName, items }: QRCodeDialogProps) {
-  const { toast } = useToast()
+interface TemplateItem {
+  id: string
+  name: string
+  order: number
+  qrCodeId: string
+  qrCodeUrl: string
+  location?: string
+}
 
-  const handleDownloadSingle = async (itemId: string, title: string) => {
+export function QRCodeDialog({ open, onOpenChange, templateId, templateName }: QRCodeDialogProps) {
+  const { toast } = useToast()
+  const [items, setItems] = useState<TemplateItem[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (open) {
+      fetchQRCodes()
+    }
+  }, [open, templateId])
+
+  const fetchQRCodes = async () => {
+    try {
+      const response = await fetch(`/api/mini-admin/template-items/qr-codes?templateId=${templateId}&format=json`)
+      if (response.ok) {
+        const data = await response.json()
+        setItems(data)
+      }
+    } catch (error) {
+      console.error("Failed to fetch QR codes:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleDownloadSingle = async (itemId: string, name: string) => {
     try {
       const response = await fetch(`/api/mini-admin/template-items/qr-codes/${itemId}/download`)
       if (response.ok) {
@@ -24,7 +56,7 @@ export function QRCodeDialog({ open, onOpenChange, templateId, templateName, ite
         const url = window.URL.createObjectURL(blob)
         const a = document.createElement("a")
         a.href = url
-        a.download = `${title.replace(/[^a-z0-9]/gi, "_").toLowerCase()}-qr.png`
+        a.download = `${name.replace(/[^a-z0-9]/gi, "_").toLowerCase()}-qr.png`
         document.body.appendChild(a)
         a.click()
         window.URL.revokeObjectURL(url)
@@ -54,37 +86,46 @@ export function QRCodeDialog({ open, onOpenChange, templateId, templateName, ite
         <div className="space-y-4">
           <div className="flex justify-end gap-2 no-print">
             <Button onClick={handlePrint} variant="outline">
+              <Printer className="mr-2 h-4 w-4" />
               Print All
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {items.map((item) => (
-              <div key={item.id} className="border rounded-lg p-4 text-center space-y-2">
-                <div className="bg-white p-4 rounded border">
-                  <img
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(item.qrCodeId)}`}
-                    alt={`QR Code for ${item.title}`}
-                    className="mx-auto"
-                    style={{ width: "150px", height: "150px" }}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <h4 className="font-medium text-sm">{item.title}</h4>
-                  <p className="text-xs text-gray-500">Order: {item.order}</p>
-                </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleDownloadSingle(item.id, item.title)}
-                  className="no-print"
-                >
-                  <Download className="mr-1 h-3 w-3" />
-                  Download
-                </Button>
-              </div>
-            ))}
-          </div>
+          {loading ? (
+            <div className="text-center py-8">Loading QR codes...</div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {items.map((item) => (
+                <Card key={item.id} className="print:break-inside-avoid">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm">{item.name}</CardTitle>
+                    {item.location && <p className="text-xs text-gray-600">{item.location}</p>}
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    <div className="flex justify-center">
+                      <img
+                        src={item.qrCodeUrl || "/placeholder.svg"}
+                        alt={`QR Code for ${item.name}`}
+                        className="w-32 h-32"
+                      />
+                    </div>
+                    <div className="text-center">
+                      <p className="text-xs font-mono text-gray-500">{item.qrCodeId}</p>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleDownloadSingle(item.id, item.name)}
+                      className="w-full no-print"
+                    >
+                      <Download className="mr-1 h-3 w-3" />
+                      Download
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
