@@ -12,6 +12,13 @@ interface QRCodeDialogProps {
   onOpenChange: (open: boolean) => void
   templateId: string
   templateName: string
+  selectedItem?: {
+    qrCodeId: string
+    qrCodeUrl: string
+    id: string
+    name: string
+    location?: string
+  }
 }
 
 interface TemplateItem {
@@ -23,7 +30,7 @@ interface TemplateItem {
   location?: string
 }
 
-export function QRCodeDialog({ open, onOpenChange, templateId, templateName }: QRCodeDialogProps) {
+export function QRCodeDialog({ open, onOpenChange, templateId, templateName, selectedItem }: QRCodeDialogProps) {
   const { toast } = useToast()
   const [items, setItems] = useState<TemplateItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -75,12 +82,28 @@ export function QRCodeDialog({ open, onOpenChange, templateId, templateName }: Q
     window.print()
   }
 
+  const selectedFromList = selectedItem
+    ? items.find((it) => it.id === selectedItem.id) || selectedItem
+    : null
+  const itemsToShow = selectedItem ? (selectedFromList ? [selectedFromList] : []) : items
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-4xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>QR Codes - {templateName}</DialogTitle>
-          <DialogDescription>QR codes for all checklist items. Print or download individual codes.</DialogDescription>
+          {selectedItem ? (
+            <>
+              <DialogTitle>QR Code - {selectedItem.name}</DialogTitle>
+              <DialogDescription>QR code for this template item.</DialogDescription>
+            </>
+          ) : (
+            <>
+              <DialogTitle>QR Codes - {templateName}</DialogTitle>
+              <DialogDescription>
+                QR codes for all checklist items. Print or download individual codes.
+              </DialogDescription>
+            </>
+          )}
         </DialogHeader>
 
         <div className="space-y-4">
@@ -95,7 +118,7 @@ export function QRCodeDialog({ open, onOpenChange, templateId, templateName }: Q
             <div className="text-center py-8">Loading QR codes...</div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {items.map((item) => (
+              {itemsToShow.map((item) => (
                 <Card key={item.id} className="print:break-inside-avoid">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm">{item.name}</CardTitle>

@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { User, LogOut, Settings, Menu, X } from "lucide-react"
+import Image from "next/image"
 
 export function Navigation() {
   const { data: session } = useSession()
@@ -66,9 +67,7 @@ export function Navigation() {
           <div className="flex items-center">
             <Link href="/" className="flex items-center space-x-2 group">
               <span className="flex items-center space-x-2">
-                <span className="w-8 h-8 bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300">
-                  <span className="text-white font-bold text-sm">IS</span>
-                </span>
+                <Image src="/checklist-logo.png" alt="Logo" width={32} height={32} />
                 <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent hidden sm:block">
                   Inspection System
                 </span>

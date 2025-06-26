@@ -32,9 +32,10 @@ interface TemplateItemsListProps {
   templateId: string
   items: TemplateItem[]
   onUpdate: () => void
+  onShowQR: (item: TemplateItem) => void
 }
 
-export function TemplateItemsList({ templateId, items, onUpdate }: TemplateItemsListProps) {
+export function TemplateItemsList({ templateId, items, onUpdate, onShowQR }: TemplateItemsListProps) {
   const [editingItem, setEditingItem] = useState<TemplateItem | null>(null)
   const [loading, setLoading] = useState<string | null>(null)
   const { toast } = useToast()
@@ -185,7 +186,7 @@ export function TemplateItemsList({ templateId, items, onUpdate }: TemplateItems
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => handleDownloadQR(item.id, item.name)}
+                  onClick={() => onShowQR(item)}
                 >
                   <QrCode className="h-4 w-4" />
                 </Button>

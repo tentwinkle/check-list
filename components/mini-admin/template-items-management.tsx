@@ -18,6 +18,7 @@ interface TemplateItemsManagementProps {
 export function MiniAdminTemplateItemsManagement({ templateId, templateName, onUpdate }: TemplateItemsManagementProps) {
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [showQRDialog, setShowQRDialog] = useState(false)
+  const [selectedItem, setSelectedItem] = useState<any>(null)
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(false)
   const { toast } = useToast()
@@ -71,6 +72,11 @@ export function MiniAdminTemplateItemsManagement({ templateId, templateName, onU
     }
   }
 
+  const handleShowQR = (item: any) => {
+    setSelectedItem(item)
+    setShowQRDialog(true)
+  }
+
   return (
     <div className="space-y-6">
       <Card>
@@ -104,6 +110,7 @@ export function MiniAdminTemplateItemsManagement({ templateId, templateName, onU
               fetchItems()
               onUpdate()
             }}
+            onShowQR={handleShowQR}
           />
         </CardContent>
       </Card>
@@ -120,9 +127,13 @@ export function MiniAdminTemplateItemsManagement({ templateId, templateName, onU
 
       <QRCodeDialog
         open={showQRDialog}
-        onOpenChange={setShowQRDialog}
+        onOpenChange={(open) => {
+          setShowQRDialog(open)
+          if (!open) setSelectedItem(null)
+        }}
         templateId={templateId}
         templateName={templateName}
+        selectedItem={selectedItem ?? undefined}
       />
     </div>
   )
