@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { useState, useEffect } from "react";
 import {
@@ -36,97 +36,108 @@ interface TemplateItem {
 }
 
 interface TemplateItemsListProps {
-  templateId: string
-  onUpdate: () => void
-  onShowQR: (item: TemplateItem) => void
+  templateId: string;
+  refreshKey: number;
+  onUpdate: () => void;
+  onShowQR: (item: TemplateItem) => void;
 }
 
-export function TemplateItemsList({ templateId, onUpdate, onShowQR }: TemplateItemsListProps) {
-  const [items, setItems] = useState<TemplateItem[]>([])
-  const [loading, setLoading] = useState(true)
-  const { toast } = useToast()
+export function TemplateItemsList({
+  templateId,
+  refreshKey,
+  onUpdate,
+  onShowQR,
+}: TemplateItemsListProps) {
+  const [items, setItems] = useState<TemplateItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
-    fetchItems()
-  }, [templateId])
+    fetchItems();
+  }, [templateId, refreshKey]);
 
   const fetchItems = async () => {
     try {
-      const response = await fetch(`/api/admin/template-items?templateId=${templateId}`)
+      const response = await fetch(
+        `/api/admin/template-items?templateId=${templateId}`,
+      );
       if (response.ok) {
-        const data = await response.json()
-        setItems(data)
+        const data = await response.json();
+        setItems(data);
       }
     } catch (error) {
-      console.error("Failed to fetch template items:", error)
+      console.error("Failed to fetch template items:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleReorder = async (itemId: string, direction: "up" | "down") => {
     try {
-      const response = await fetch(`/api/admin/template-items/${itemId}/reorder`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
+      const response = await fetch(
+        `/api/admin/template-items/${itemId}/reorder`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ direction }),
         },
-        body: JSON.stringify({ direction }),
-      })
+      );
 
       if (response.ok) {
-        fetchItems()
-        onUpdate()
+        fetchItems();
+        onUpdate();
       } else {
         toast({
           title: "Error",
           description: "Failed to reorder item",
           variant: "destructive",
-        })
+        });
       }
     } catch (error) {
       toast({
         title: "Error",
         description: "An unexpected error occurred",
         variant: "destructive",
-      })
+      });
     }
-  }
+  };
 
   const handleDelete = async (itemId: string) => {
-    if (!confirm("Are you sure you want to delete this item?")) return
+    if (!confirm("Are you sure you want to delete this item?")) return;
 
     try {
       const response = await fetch(`/api/admin/template-items/${itemId}`, {
         method: "DELETE",
-      })
+      });
 
       if (response.ok) {
         toast({
           title: "Success",
           description: "Template item deleted successfully.",
-        })
-        fetchItems()
-        onUpdate()
+        });
+        fetchItems();
+        onUpdate();
       } else {
-        const error = await response.json()
+        const error = await response.json();
         toast({
           title: "Error",
           description: error.message || "Failed to delete template item",
           variant: "destructive",
-        })
+        });
       }
     } catch (error) {
       toast({
         title: "Error",
         description: "An unexpected error occurred",
         variant: "destructive",
-      })
+      });
     }
-  }
+  };
 
   if (loading) {
-    return <div className="text-center py-4">Loading template items...</div>
+    return <div className="text-center py-4">Loading template items...</div>;
   }
 
   if (items.length === 0) {
@@ -134,7 +145,7 @@ export function TemplateItemsList({ templateId, onUpdate, onShowQR }: TemplateIt
       <div className="text-center py-8 text-gray-500">
         No template items found. Add your first checklist item to get started.
       </div>
-    )
+    );
   }
 
   const sortedItems = [...items].sort((a, b) => a.order - b.order);
@@ -183,7 +194,11 @@ export function TemplateItemsList({ templateId, onUpdate, onShowQR }: TemplateIt
             <TableCell>{item.description || "-"}</TableCell>
             <TableCell>{item.location || "-"}</TableCell>
             <TableCell>
-              <Button variant="outline" size="sm" onClick={() => onShowQR(item)}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onShowQR(item)}
+              >
                 <QrCode className="h-4 w-4" />
               </Button>
             </TableCell>
@@ -199,7 +214,10 @@ export function TemplateItemsList({ templateId, onUpdate, onShowQR }: TemplateIt
                     <Edit className="mr-2 h-4 w-4" />
                     Edit
                   </DropdownMenuItem>
-                  <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(item.id)}>
+                  <DropdownMenuItem
+                    className="text-red-600"
+                    onClick={() => handleDelete(item.id)}
+                  >
                     <Trash2 className="mr-2 h-4 w-4" />
                     Delete
                   </DropdownMenuItem>
@@ -210,5 +228,5 @@ export function TemplateItemsList({ templateId, onUpdate, onShowQR }: TemplateIt
         ))}
       </TableBody>
     </Table>
-  )
+  );
 }

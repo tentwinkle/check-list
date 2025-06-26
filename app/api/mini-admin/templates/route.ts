@@ -1,28 +1,30 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/lib/auth"
-import type { Session } from "next-auth"
-import { prisma } from "@/lib/prisma"
-import { createAuditLog } from "@/lib/audit"
+import { type NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
+import type { Session } from "next-auth";
+import { prisma } from "@/lib/prisma";
+import { createAuditLog } from "@/lib/audit";
 
 export async function GET() {
   try {
-    const session: Session | null = await getServerSession(authOptions)
+    const session: Session | null = await getServerSession(authOptions);
 
     if (!session || session.user.role !== "MINI_ADMIN") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const areaId = session.user.areaId
+    const areaId = session.user.areaId;
+    const userDepartmentId = session.user.departmentId;
 
     if (!areaId) {
-      return NextResponse.json({ error: "Area not found" }, { status: 400 })
+      return NextResponse.json({ error: "Area not found" }, { status: 400 });
     }
 
     const templates = await prisma.masterTemplate.findMany({
       where: {
         department: {
           areaId,
+          ...(userDepartmentId ? { id: userDepartmentId } : {}),
         },
       },
       include: {
@@ -41,44 +43,64 @@ export async function GET() {
       orderBy: {
         createdAt: "desc",
       },
-    })
+    });
 
-    return NextResponse.json(templates)
+    return NextResponse.json(templates);
   } catch (error) {
-    console.error("Error fetching templates:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    console.error("Error fetching templates:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const session: Session | null = await getServerSession(authOptions)
+    const session: Session | null = await getServerSession(authOptions);
 
     if (!session || session.user.role !== "MINI_ADMIN") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const areaId = session.user.areaId
-    const organizationId = session.user.organizationId
+    const areaId = session.user.areaId;
+    const organizationId = session.user.organizationId;
+    const userDepartmentId = session.user.departmentId;
 
     if (!areaId || !organizationId) {
-      return NextResponse.json({ error: "Area or organization not found" }, { status: 400 })
+      return NextResponse.json(
+        { error: "Area or organization not found" },
+        { status: 400 },
+      );
     }
 
-    const { name, description, frequency, departmentId } = await request.json()
+    const { name, description, frequency, departmentId } = await request.json();
 
-    // Verify department belongs to the area if provided
-    if (departmentId) {
+    let finalDepartmentId: string | null = null;
+
+    if (userDepartmentId) {
+      if (departmentId && departmentId !== userDepartmentId) {
+        return NextResponse.json(
+          { error: "Invalid department" },
+          { status: 400 },
+        );
+      }
+      finalDepartmentId = userDepartmentId;
+    } else if (departmentId) {
       const department = await prisma.department.findFirst({
         where: {
           id: departmentId,
           areaId,
         },
-      })
+      });
 
       if (!department) {
-        return NextResponse.json({ error: "Invalid department" }, { status: 400 })
+        return NextResponse.json(
+          { error: "Invalid department" },
+          { status: 400 },
+        );
       }
+      finalDepartmentId = departmentId;
     }
 
     const template = await prisma.masterTemplate.create({
@@ -87,20 +109,28 @@ export async function POST(request: NextRequest) {
         description,
         frequency,
         organizationId,
-        departmentId: departmentId || null,
+        departmentId: finalDepartmentId,
       },
-    })
+    });
 
-    await createAuditLog(session.user.id, "CREATE_TEMPLATE", "Template", template.id)
+    await createAuditLog(
+      session.user.id,
+      "CREATE_TEMPLATE",
+      "Template",
+      template.id,
+    );
 
     return NextResponse.json({
       message: "Template created successfully",
       template,
-    })
+    });
   } catch (error) {
-    console.error("Error creating template:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    console.error("Error creating template:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }
 
-export const dynamic = "force-dynamic"
+export const dynamic = "force-dynamic";

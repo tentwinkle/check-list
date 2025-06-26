@@ -1,103 +1,119 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState, useEffect } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useToast } from "@/hooks/use-toast"
+import { useState, useEffect } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
 
 interface User {
-  id: string
-  name?: string
-  email: string
-  role: string
-  areaId?: string
-  departmentId?: string
+  id: string;
+  name?: string;
+  email: string;
+  role: string;
+  areaId?: string;
+  departmentId?: string;
   area?: {
-    id: string
-    name: string
-  }
+    id: string;
+    name: string;
+  };
   department?: {
-    id: string
-    name: string
-  }
+    id: string;
+    name: string;
+  };
 }
 
 interface Area {
-  id: string
-  name: string
+  id: string;
+  name: string;
 }
 
 interface Department {
-  id: string
-  name: string
-  areaId?: string
+  id: string;
+  name: string;
+  areaId?: string;
 }
 
 interface EditUserDialogProps {
-  user: User | null
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onSuccess: () => void
+  user: User | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSuccess: () => void;
 }
 
-export function EditUserDialog({ user, open, onOpenChange, onSuccess }: EditUserDialogProps) {
-  const [name, setName] = useState("")
-  const [email, setEmail] = useState("")
-  const [role, setRole] = useState("")
-  const [areaId, setAreaId] = useState("")
-  const [departmentId, setDepartmentId] = useState("")
-  const [areas, setAreas] = useState<Area[]>([])
-  const [departments, setDepartments] = useState<Department[]>([])
-  const [loading, setLoading] = useState(false)
-  const [loadingData, setLoadingData] = useState(false)
-  const { toast } = useToast()
+export function EditUserDialog({
+  user,
+  open,
+  onOpenChange,
+  onSuccess,
+}: EditUserDialogProps) {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [role, setRole] = useState("");
+  const [areaId, setAreaId] = useState("");
+  const [departmentId, setDepartmentId] = useState("");
+  const [areas, setAreas] = useState<Area[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [loadingData, setLoadingData] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (open && user) {
-      setName(user.name || "")
-      setEmail(user.email)
-      setRole(user.role)
-      setAreaId(user.areaId || "NONE")
-      setDepartmentId(user.departmentId || "NONE")
-      fetchAreas()
-      fetchDepartments()
+      setName(user.name || "");
+      setEmail(user.email);
+      setRole(user.role);
+      setAreaId(user.areaId || "NONE");
+      setDepartmentId(user.departmentId || "NONE");
+      fetchAreas();
+      fetchDepartments();
     }
-  }, [open, user])
+  }, [open, user]);
 
   const fetchAreas = async () => {
     try {
-      const response = await fetch("/api/admin/areas")
+      const response = await fetch("/api/admin/areas");
       if (response.ok) {
-        const data = await response.json()
-        setAreas(data)
+        const data = await response.json();
+        setAreas(data);
       }
     } catch (error) {
-      console.error("Failed to fetch areas:", error)
+      console.error("Failed to fetch areas:", error);
     }
-  }
+  };
 
   const fetchDepartments = async () => {
     try {
-      const response = await fetch("/api/admin/departments")
+      const response = await fetch("/api/admin/departments");
       if (response.ok) {
-        const data = await response.json()
-        setDepartments(data)
+        const data = await response.json();
+        setDepartments(data);
       }
     } catch (error) {
-      console.error("Failed to fetch departments:", error)
+      console.error("Failed to fetch departments:", error);
     }
-  }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!user) return
+    e.preventDefault();
+    if (!user) return;
 
-    setLoading(true)
+    setLoading(true);
     try {
       const response = await fetch(`/api/admin/users/${user.id}`, {
         method: "PUT",
@@ -111,46 +127,46 @@ export function EditUserDialog({ user, open, onOpenChange, onSuccess }: EditUser
           areaId: areaId === "NONE" ? null : areaId,
           departmentId: departmentId === "NONE" ? null : departmentId,
         }),
-      })
+      });
 
       if (response.ok) {
         toast({
           title: "Success",
           description: "User updated successfully.",
-        })
-        onSuccess()
-        onOpenChange(false)
+        });
+        onSuccess();
+        onOpenChange(false);
       } else {
-        const error = await response.json()
+        const error = await response.json();
         toast({
           title: "Error",
-          description: error.message || "Failed to update user",
+          description: error.error || error.message || "Failed to update user",
           variant: "destructive",
-        })
+        });
       }
     } catch (error) {
       toast({
         title: "Error",
         description: "An unexpected error occurred",
         variant: "destructive",
-      })
+      });
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const getRoleDisplay = (role: string) => {
     switch (role) {
       case "ADMIN":
-        return "Team Leader"
+        return "Team Leader";
       case "MINI_ADMIN":
-        return "Area Leader"
+        return "Area Leader";
       case "INSPECTOR":
-        return "Inspector"
+        return "Inspector";
       default:
-        return role
+        return role;
     }
-  }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -161,7 +177,12 @@ export function EditUserDialog({ user, open, onOpenChange, onSuccess }: EditUser
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="name">Name (Optional)</Label>
-            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter user name" />
+            <Input
+              id="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Enter user name"
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="email">Email *</Label>
@@ -182,8 +203,12 @@ export function EditUserDialog({ user, open, onOpenChange, onSuccess }: EditUser
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="ADMIN">{getRoleDisplay("ADMIN")}</SelectItem>
-                <SelectItem value="MINI_ADMIN">{getRoleDisplay("MINI_ADMIN")}</SelectItem>
-                <SelectItem value="INSPECTOR">{getRoleDisplay("INSPECTOR")}</SelectItem>
+                <SelectItem value="MINI_ADMIN">
+                  {getRoleDisplay("MINI_ADMIN")}
+                </SelectItem>
+                <SelectItem value="INSPECTOR">
+                  {getRoleDisplay("INSPECTOR")}
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -220,7 +245,11 @@ export function EditUserDialog({ user, open, onOpenChange, onSuccess }: EditUser
             </Select>
           </div>
           <div className="flex justify-end space-x-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
               Cancel
             </Button>
             <Button type="submit" disabled={loading}>
@@ -230,5 +259,5 @@ export function EditUserDialog({ user, open, onOpenChange, onSuccess }: EditUser
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

@@ -6,7 +6,8 @@ import { prisma } from "@/lib/prisma";
 import { randomBytes } from "crypto";
 
 function generateShortId(length = 8) {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  const chars =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   const bytes = randomBytes(length);
   let id = "";
   for (let i = 0; i < length; i++) {
@@ -34,11 +35,13 @@ export async function GET(request: NextRequest) {
     }
 
     const organizationId = session.user.organizationId;
+    const userDepartmentId = session.user.departmentId;
 
     const template = await prisma.masterTemplate.findFirst({
       where: {
         id: templateId,
         organizationId,
+        ...(userDepartmentId ? { departmentId: userDepartmentId } : {}),
       },
     });
 
@@ -79,11 +82,13 @@ export async function POST(request: NextRequest) {
     }
 
     const organizationId = session.user.organizationId;
+    const userDepartmentId = session.user.departmentId;
 
     const template = await prisma.masterTemplate.findFirst({
       where: {
         id: templateId,
         organizationId,
+        ...(userDepartmentId ? { departmentId: userDepartmentId } : {}),
       },
     });
 
