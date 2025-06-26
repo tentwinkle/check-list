@@ -18,7 +18,6 @@ export async function GET(
 
     const areaId = session.user.areaId;
     const userDepartmentId = session.user.departmentId;
-    const userDepartmentId = session.user.departmentId;
 
     if (!areaId) {
       return NextResponse.json({ error: "Area not found" }, { status: 400 });
