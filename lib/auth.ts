@@ -51,7 +51,7 @@ export const authOptions: NextAuthOptions = {
           organizationId: user.organizationId,
           areaId: user.areaId,
           departmentId: user.departmentId,
-          profileImage: user.profileImage,
+          profileImage: user.image,
         }
       },
     }),
@@ -67,7 +67,7 @@ export const authOptions: NextAuthOptions = {
         token.organizationId = user.organizationId
         token.areaId = user.areaId
         token.departmentId = user.departmentId
-        token.profileImage = user.profileImage
+        token.profileImage = user.image
       }
 
       // Handle session updates

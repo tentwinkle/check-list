@@ -78,15 +78,20 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
     const emailChanged = email !== existingUser.email
 
+    const updateData: any = {
+      name,
+      email,
+      role: role as any,
+      areaId: areaId === "NONE" ? null : areaId,
+      departmentId: departmentId === "NONE" ? null : departmentId,
+    }
+    if (emailChanged) {
+      updateData.password = null
+    }
+
     const user = await prisma.user.update({
       where: { id: params.id },
-      data: {
-        name,
-        email,
-        role: role as any,
-        areaId: areaId === "NONE" ? null : areaId,
-        departmentId: departmentId === "NONE" ? null : departmentId,
-      },
+      data: updateData,
     })
 
     if (emailChanged) {

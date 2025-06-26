@@ -46,7 +46,10 @@ export async function PATCH(request: NextRequest) {
 
     // Only update profile image if provided
     if (profileImage !== undefined) {
-      updateData.profileImage = profileImage
+      updateData.image = profileImage
+    }
+    if (emailChanged) {
+      updateData.password = null
     }
 
     const updatedUser = await prisma.user.update({
@@ -59,7 +62,7 @@ export async function PATCH(request: NextRequest) {
         name: true,
         email: true,
         role: true,
-        profileImage: true,
+        image: true,
       },
     })
 
