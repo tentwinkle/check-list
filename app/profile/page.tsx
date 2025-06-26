@@ -40,6 +40,7 @@ export default function ProfilePage() {
   const [formData, setFormData] = useState({
     name: session?.user?.name || "",
     email: session?.user?.email || "",
+    profileImage: session?.user?.profileImage || "",
   })
 
   useEffect(() => {
@@ -47,7 +48,9 @@ export default function ProfilePage() {
       setFormData({
         name: session.user?.name || "",
         email: session.user?.email || "",
+        profileImage: session.user?.profileImage || "",
       })
+      setProfileImage(session.user?.profileImage || null)
       fetchUserStats()
     }
   }, [session])
@@ -147,7 +150,9 @@ export default function ProfilePage() {
       // Create preview
       const reader = new FileReader()
       reader.onload = (e) => {
-        setProfileImage(e.target?.result as string)
+        const result = e.target?.result as string
+        setProfileImage(result)
+        setFormData((prev) => ({ ...prev, profileImage: result }))
       }
       reader.readAsDataURL(file)
 
@@ -183,18 +188,22 @@ export default function ProfilePage() {
       })
 
       if (!response.ok) {
-        throw new Error("Failed to update profile")
+        const err = await response.json()
+        throw new Error(err.error || "Failed to update profile")
       }
+      const updated = await response.json()
 
       // Update session data
       await update({
         ...session,
         user: {
           ...session.user,
-          name: formData.name,
-          email: formData.email,
+          name: updated.name,
+          email: updated.email,
+          profileImage: updated.image,
         },
       })
+      setProfileImage(updated.image || null)
 
       toast({
         title: "Profile updated",
@@ -202,9 +211,10 @@ export default function ProfilePage() {
       })
       setIsEditing(false)
     } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to update profile"
       toast({
         title: "Error",
-        description: "Failed to update profile. Please try again.",
+        description: message,
         variant: "destructive",
       })
     } finally {
@@ -216,7 +226,9 @@ export default function ProfilePage() {
     setFormData({
       name: session?.user?.name || "",
       email: session?.user?.email || "",
+      profileImage: session?.user?.profileImage || "",
     })
+    setProfileImage(session?.user?.profileImage || null)
     setIsEditing(false)
   }
 

@@ -4,7 +4,7 @@ import { sendPasswordResetEmailFallback, sendWelcomeEmailFallback, sendAccountSe
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
   port: Number.parseInt(process.env.SMTP_PORT || "587"),
-  secure: false, // true for 465, false for other ports
+  secure: Number.parseInt(process.env.SMTP_PORT || "587") === 465,
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASSWORD,
@@ -27,6 +27,7 @@ export async function sendPasswordResetEmail(email: string, resetToken: string) 
     from: process.env.SMTP_FROM,
     to: email,
     subject: "Reset Your Password - Inspection System",
+    text: `Reset your password using the following link: ${resetUrl}`,
     html: `
       <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
         <h2>Password Reset Request</h2>
@@ -59,6 +60,7 @@ export async function sendWelcomeEmail(email: string, name: string, role: string
     from: process.env.SMTP_FROM,
     to: email,
     subject: "Welcome to Inspection System",
+    text: `Welcome to the Inspection System for ${organizationName}.`,
     html: `
       <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
         <h2>Welcome to the Inspection System</h2>
@@ -97,6 +99,7 @@ export async function sendAccountSetupEmail(
     from: process.env.SMTP_FROM,
     to: email,
     subject: "Welcome to Inspection System",
+    text: `Create your password using the following link: ${resetUrl}`,
     html: `
       <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
         <h2>Welcome to the Inspection System</h2>
@@ -131,6 +134,7 @@ export async function sendEmailUpdateNotification(email: string, resetToken: str
     from: process.env.SMTP_FROM,
     to: email,
     subject: "Your account email was updated",
+    text: `Your email was updated. Set a new password here: ${resetUrl}`,
     html: `
       <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
         <h2>Email Updated</h2>
