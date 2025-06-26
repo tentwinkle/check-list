@@ -61,12 +61,18 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
     const emailChanged = email && email !== existingUser.email
 
+    const updateData: any = {
+      name,
+      email,
+    }
+
+    if (emailChanged) {
+      updateData.password = null
+    }
+
     const user = await prisma.user.update({
       where: { id: params.id },
-      data: {
-        name,
-        email,
-      },
+      data: updateData,
     })
 
     if (emailChanged) {
