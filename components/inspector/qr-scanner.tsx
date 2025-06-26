@@ -24,55 +24,56 @@ export function QRScanner({ open, onClose }: QRScannerProps) {
   const router = useRouter()
 
   useEffect(() => {
-  if (open && !showManualInput && !scannerInitialized) {
-    // Wait for the Dialog to render the DOM node
-    const interval = setInterval(() => {
-      const readerElement = document.getElementById("qr-reader")
-      if (readerElement) {
-        try {
-          scannerRef.current = new Html5QrcodeScanner("qr-reader", {
-            fps: 10,
-            qrbox: 250,
-            rememberLastUsedCamera: true,
-          })
+    let interval: NodeJS.Timeout | null = null
 
-          scannerRef.current.render(
-            async (decodedText) => {
-              if (decodedText) {
-                handleQRCodeFound(decodedText)
-              }
-            },
-            (error) => {
-              // optional: console.warn(error)
-            }
-          )
+    if (open && !showManualInput && !scannerInitialized) {
+      // Wait for the Dialog to render the DOM node
+      interval = setInterval(() => {
+        const readerElement = document.getElementById("qr-reader")
+        if (readerElement) {
+          try {
+            scannerRef.current = new Html5QrcodeScanner("qr-reader", {
+              fps: 10,
+              qrbox: 250,
+              rememberLastUsedCamera: true,
+            })
 
-          setScannerInitialized(true)
-          clearInterval(interval)
-        } catch (error) {
-          console.error("Failed to initialize scanner:", error)
-          toast({
-            title: "Scanner Error",
-            description: "Could not start QR scanner. Try manual entry.",
-            variant: "destructive",
-          })
-          setShowManualInput(true)
-          clearInterval(interval)
+            scannerRef.current.render(
+              async (decodedText) => {
+                if (decodedText) {
+                  handleQRCodeFound(decodedText)
+                }
+              },
+              () => {
+                // ignore errors from scanner
+              },
+            )
+
+            setScannerInitialized(true)
+            if (interval) clearInterval(interval)
+          } catch (error) {
+            console.error("Failed to initialize scanner:", error)
+            toast({
+              title: "Scanner Error",
+              description: "Could not start QR scanner. Try manual entry.",
+              variant: "destructive",
+            })
+            setShowManualInput(true)
+            if (interval) clearInterval(interval)
+          }
         }
+      }, 200)
+    }
+
+    return () => {
+      if (interval) clearInterval(interval)
+      if (scannerRef.current) {
+        scannerRef.current.clear().catch(console.warn)
+        scannerRef.current = null
       }
-    }, 200)
-
-    return () => clearInterval(interval)
-  }
-
-  return () => {
-    if (scannerRef.current) {
-      scannerRef.current.clear().catch(console.warn)
-      scannerRef.current = null
       setScannerInitialized(false)
     }
-  }
-}, [open, showManualInput])
+  }, [open, showManualInput, scannerInitialized])
 
 
   const handleQRCodeFound = async (qrCodeId: string) => {
