@@ -147,18 +147,31 @@ export default function ProfilePage() {
     setIsUploadingImage(true)
 
     try {
-      // Create preview
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        const result = e.target?.result as string
-        setProfileImage(result)
-        setFormData((prev) => ({ ...prev, profileImage: result }))
-      }
-      reader.readAsDataURL(file)
+      const formData = new FormData()
+      formData.append("file", file)
 
-      // Here you would typically upload to your storage service
-      // For now, we'll simulate the upload
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+      const response = await fetch("/api/user/profile/image", {
+        method: "POST",
+        body: formData,
+      })
+
+      if (!response.ok) {
+        const err = await response.json()
+        throw new Error(err.error || "Failed to upload image")
+      }
+
+      const updated = await response.json()
+
+      setProfileImage(updated.image || null)
+      setFormData((prev) => ({ ...prev, profileImage: updated.image || "" }))
+
+      await update({
+        ...session,
+        user: {
+          ...session.user,
+          profileImage: updated.image,
+        },
+      })
 
       toast({
         title: "Profile image updated",
