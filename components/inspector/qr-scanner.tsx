@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
 import { Camera, Type } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { Html5QrcodeScanner } from "html5-qrcode"
+import { Html5Qrcode, CameraDevice } from "html5-qrcode"
 
 interface QRScannerProps {
   open: boolean
@@ -18,62 +18,42 @@ interface QRScannerProps {
 export function QRScanner({ open, onClose }: QRScannerProps) {
   const [showManualInput, setShowManualInput] = useState(false)
   const [manualCode, setManualCode] = useState("")
-  const [scannerInitialized, setScannerInitialized] = useState(false)
-  const scannerRef = useRef<Html5QrcodeScanner | null>(null)
+  const [cameras, setCameras] = useState<CameraDevice[]>([])
+  const [cameraId, setCameraId] = useState<string>("")
+  const [scanning, setScanning] = useState(false)
+  const scannerRef = useRef<Html5Qrcode | null>(null)
   const { toast } = useToast()
   const router = useRouter()
 
   useEffect(() => {
-    let interval: NodeJS.Timeout | null = null
-
-    if (open && !showManualInput && !scannerInitialized) {
-      // Wait for the Dialog to render the DOM node
-      interval = setInterval(() => {
-        const readerElement = document.getElementById("qr-reader")
-        if (readerElement) {
-          try {
-            scannerRef.current = new Html5QrcodeScanner("qr-reader", {
-              fps: 10,
-              qrbox: 250,
-              rememberLastUsedCamera: true,
-            })
-
-            scannerRef.current.render(
-              async (decodedText) => {
-                if (decodedText) {
-                  handleQRCodeFound(decodedText)
-                }
-              },
-              () => {
-                // ignore errors from scanner
-              },
-            )
-
-            setScannerInitialized(true)
-            if (interval) clearInterval(interval)
-          } catch (error) {
-            console.error("Failed to initialize scanner:", error)
-            toast({
-              title: "Scanner Error",
-              description: "Could not start QR scanner. Try manual entry.",
-              variant: "destructive",
-            })
-            setShowManualInput(true)
-            if (interval) clearInterval(interval)
+    if (open && !showManualInput) {
+      Html5Qrcode.getCameras()
+        .then((devices) => {
+          setCameras(devices)
+          if (devices.length > 0) {
+            setCameraId(devices[0].id)
           }
-        }
-      }, 200)
+        })
+        .catch((err) => {
+          console.error("Camera error:", err)
+          toast({
+            title: "Camera Permission Needed",
+            description: "Please allow camera access in your browser.",
+            variant: "destructive",
+          })
+          setShowManualInput(true)
+        })
     }
 
     return () => {
-      if (interval) clearInterval(interval)
       if (scannerRef.current) {
-        scannerRef.current.clear().catch(console.warn)
+        scannerRef.current.stop().catch(() => {})
+        scannerRef.current.clear()
         scannerRef.current = null
       }
-      setScannerInitialized(false)
+      setScanning(false)
     }
-  }, [open, showManualInput, scannerInitialized])
+  }, [open, showManualInput])
 
 
   const handleQRCodeFound = async (qrCodeId: string) => {
@@ -113,13 +93,47 @@ export function QRScanner({ open, onClose }: QRScannerProps) {
     }
   }
 
+  const startScan = async () => {
+    if (!cameraId) return
+    try {
+      // Request permission first so we can provide clearer errors
+      await navigator.mediaDevices.getUserMedia({
+        video: { deviceId: { exact: cameraId } },
+      })
+
+      scannerRef.current = new Html5Qrcode("qr-reader")
+      await scannerRef.current.start(
+        { deviceId: { exact: cameraId } },
+        { fps: 10, qrbox: 250 },
+        (decoded) => decoded && handleQRCodeFound(decoded),
+        () => {}
+      )
+      setScanning(true)
+    } catch (error) {
+      console.error("Failed to start scan:", error)
+      const message =
+        error instanceof Error ? error.message : "Unable to start camera."
+      toast({
+        title: "Scanner Error",
+        description: message,
+        variant: "destructive",
+      })
+    }
+  }
+
+  const stopScan = async () => {
+    if (scannerRef.current) {
+      await scannerRef.current.stop().catch(() => {})
+      scannerRef.current.clear()
+      scannerRef.current = null
+    }
+    setScanning(false)
+  }
+
   const handleClose = () => {
     setManualCode("")
     setShowManualInput(false)
-    if (scannerRef.current) {
-      scannerRef.current.clear().catch(console.warn)
-      scannerRef.current = null
-    }
+    stopScan()
     onClose()
   }
 
@@ -134,16 +148,7 @@ export function QRScanner({ open, onClose }: QRScannerProps) {
         </DialogHeader>
 
         <div className="space-y-4">
-          {!showManualInput ? (
-            <div className="space-y-4">
-              <div id="qr-reader" className="rounded-lg overflow-hidden" />
-              <p className="text-sm text-gray-600 text-center">Position the QR code within the frame to scan</p>
-              <Button variant="outline" onClick={() => setShowManualInput(true)} className="w-full">
-                <Type className="mr-2 h-4 w-4" />
-                Enter Code Manually
-              </Button>
-            </div>
-          ) : (
+          {showManualInput ? (
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="manual-code">QR Code</Label>
@@ -164,6 +169,43 @@ export function QRScanner({ open, onClose }: QRScannerProps) {
                   <Camera className="h-4 w-4" />
                 </Button>
               </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {scanning ? (
+                <>
+                  <div id="qr-reader" className="rounded-lg overflow-hidden" />
+                  <p className="text-sm text-gray-600 text-center">Point the camera at a QR code</p>
+                  <Button variant="outline" onClick={stopScan} className="w-full">
+                    Stop Scanning
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="camera-select">Camera</Label>
+                    <select
+                      id="camera-select"
+                      className="w-full rounded border px-3 py-2 bg-transparent"
+                      value={cameraId}
+                      onChange={(e) => setCameraId(e.target.value)}
+                    >
+                      {cameras.map((c) => (
+                        <option key={c.id} value={c.id} className="bg-gray-100 dark:bg-gray-800">
+                          {c.label || c.id}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <Button onClick={startScan} disabled={!cameraId} className="w-full">
+                    Start Scanning
+                  </Button>
+                  <Button variant="outline" onClick={() => setShowManualInput(true)} className="w-full">
+                    <Type className="mr-2 h-4 w-4" />
+                    Enter Code Manually
+                  </Button>
+                </>
+              )}
             </div>
           )}
         </div>

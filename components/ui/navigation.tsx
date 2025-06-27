@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { User, LogOut, Settings, Menu, X } from "lucide-react"
 import Image from "next/image"
 
@@ -92,18 +92,26 @@ export function Navigation() {
                   className="relative p-0 rounded-full glass hover:shadow-lg transition-all duration-300"
                 >
                   <Avatar className="h-10 w-10 ring-2 ring-white/20">
-                    <AvatarFallback className="bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold">
-                      {getInitials(session.user.name || session.user.email)}
-                    </AvatarFallback>
+                    {session.user.profileImage ? (
+                      <AvatarImage src={session.user.profileImage} alt="Avatar" />
+                    ) : (
+                      <AvatarFallback className="bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold">
+                        {getInitials(session.user.name || session.user.email)}
+                      </AvatarFallback>
+                    )}
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-64 glass border-white/20 shadow-xl" align="end" forceMount>
                 <div className="flex items-center justify-start gap-3">
                   <Avatar className="h-12 w-12 ring-2 ring-white/20">
-                    <AvatarFallback className="bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold">
-                      {getInitials(session.user.name || session.user.email)}
-                    </AvatarFallback>
+                    {session.user.profileImage ? (
+                      <AvatarImage src={session.user.profileImage} alt="Avatar" />
+                    ) : (
+                      <AvatarFallback className="bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold">
+                        {getInitials(session.user.name || session.user.email)}
+                      </AvatarFallback>
+                    )}
                   </Avatar>
                   <div className="flex flex-col space-y-1 leading-none">
                     <p className="font-semibold text-gray-900 dark:text-gray-100">{session.user.name}</p>
@@ -158,9 +166,13 @@ export function Navigation() {
             <div className="px-2 pt-2 pb-3 space-y-1 glass rounded-xl mt-2 mb-4 border border-white/20">
               <div className="flex items-center space-x-3 p-3 rounded-lg bg-white/10">
                 <Avatar className="h-10 w-10 ring-2 ring-white/20">
-                  <AvatarFallback className="bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold">
-                    {getInitials(session.user.name || session.user.email)}
-                  </AvatarFallback>
+                  {session.user.profileImage ? (
+                    <AvatarImage src={session.user.profileImage} alt="Avatar" />
+                  ) : (
+                    <AvatarFallback className="bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold">
+                      {getInitials(session.user.name || session.user.email)}
+                    </AvatarFallback>
+                  )}
                 </Avatar>
                 <div>
                   <p className="font-semibold text-gray-900 dark:text-gray-100">{session.user.name}</p>
