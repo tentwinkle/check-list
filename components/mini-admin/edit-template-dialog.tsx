@@ -96,6 +96,9 @@ export function EditTemplateDialog({ template, open, onOpenChange, onTemplateUpd
       if (response.ok) {
         toast.success("Template updated successfully")
         onTemplateUpdated()
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new Event("template-updated"))
+        }
         onOpenChange(false)
       } else {
         const error = await response.json()

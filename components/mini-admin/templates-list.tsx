@@ -54,6 +54,16 @@ export function TemplatesList({ onUpdate, refreshKey }: TemplatesListProps) {
     fetchTemplates()
   }, [refreshKey])
 
+  useEffect(() => {
+    const handleUpdate = () => fetchTemplates()
+    window.addEventListener("template-created", handleUpdate)
+    window.addEventListener("template-updated", handleUpdate)
+    return () => {
+      window.removeEventListener("template-created", handleUpdate)
+      window.removeEventListener("template-updated", handleUpdate)
+    }
+  }, [])
+
   const fetchTemplates = async () => {
     try {
       const response = await fetch("/api/mini-admin/templates")
@@ -95,6 +105,9 @@ export function TemplatesList({ onUpdate, refreshKey }: TemplatesListProps) {
         setDeletingTemplate(null)
         onUpdate()
         fetchTemplates()
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new Event("template-updated"))
+        }
       } else {
         const error = await response.json()
         toast({
