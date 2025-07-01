@@ -69,43 +69,6 @@ export function QRScanner({ open, onClose }: QRScannerProps) {
     }
   }
 
-  const startScan = async () => {
-    if (!cameraId) return
-    try {
-      // Request permission first so we can provide clearer errors
-      await navigator.mediaDevices.getUserMedia({
-        video: { deviceId: { exact: cameraId } },
-      })
-
-      scannerRef.current = new Html5Qrcode("qr-reader")
-      await scannerRef.current.start(
-        { deviceId: { exact: cameraId } },
-        { fps: 10, qrbox: 250 },
-        (decoded) => decoded && handleQRCodeFound(decoded),
-        () => {}
-      )
-      setScanning(true)
-    } catch (error) {
-      console.error("Failed to start scan:", error)
-      const message =
-        error instanceof Error ? error.message : "Unable to start camera."
-      toast({
-        title: "Scanner Error",
-        description: message,
-        variant: "destructive",
-      })
-    }
-  }
-
-  const stopScan = async () => {
-    if (scannerRef.current) {
-      await scannerRef.current.stop().catch(() => {})
-      scannerRef.current.clear()
-      scannerRef.current = null
-    }
-    setScanning(false)
-  }
-
   const handleClose = () => {
     setManualCode("")
     setShowManualInput(false)
