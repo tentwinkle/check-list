@@ -82,6 +82,9 @@ export function CreateTemplateDialog({ open, onOpenChange, onSuccess }: CreateTe
         })
         onOpenChange(false)
         onSuccess()
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new Event("template-created"))
+        }
       } else {
         const error = await response.json()
         toast({
