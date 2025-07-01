@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Organization not found" }, { status: 400 })
     }
 
-    const { name, email, role, areaId, departmentId } = await request.json()
+    const { name, email, role, areaId, departmentId, password } = await request.json()
 
     // Check if email already exists (case-insensitive)
     const existingUser = await prisma.user.findFirst({
@@ -102,10 +102,16 @@ export async function POST(request: NextRequest) {
 
     // Create user in a transaction
     const result = await prisma.$transaction(async (tx) => {
-      // Generate temporary password and reset token
-      const tempPassword = Math.random().toString(36).slice(-8)
-      const hashedPassword = await bcrypt.hash(tempPassword, 12)
-      const resetToken = generateResetToken()
+      let hashedPassword: string
+      let resetToken: string | null = null
+
+      if (password) {
+        hashedPassword = await bcrypt.hash(password, 12)
+      } else {
+        const tempPassword = Math.random().toString(36).slice(-8)
+        hashedPassword = await bcrypt.hash(tempPassword, 12)
+        resetToken = generateResetToken()
+      }
 
       // Create user
       const user = await tx.user.create({
@@ -120,14 +126,15 @@ export async function POST(request: NextRequest) {
         },
       })
 
-      // Store reset token
-      await tx.verificationToken.create({
-        data: {
-          identifier: email,
-          token: resetToken,
-          expires: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
-        },
-      })
+      if (resetToken) {
+        await tx.verificationToken.create({
+          data: {
+            identifier: email,
+            token: resetToken,
+            expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
+          },
+        })
+      }
 
       return { user, resetToken }
     })
@@ -139,13 +146,15 @@ export async function POST(request: NextRequest) {
     })
 
     // Send account setup email
-    await sendAccountSetupEmail(
-      email,
-      name,
-      role,
-      organization?.name || "Organization",
-      result.resetToken,
-    )
+    if (result.resetToken) {
+      await sendAccountSetupEmail(
+        email,
+        name,
+        role,
+        organization?.name || "Organization",
+        result.resetToken,
+      )
+    }
 
     await createAuditLog(session.user.id, "CREATE_USER", "User", result.user.id)
 

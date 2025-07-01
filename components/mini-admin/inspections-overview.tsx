@@ -34,6 +34,7 @@ export function MiniAdminInspectionsOverview({ onUpdate }: InspectionsOverviewPr
   const [inspections, setInspections] = useState<InspectionInstance[]>([])
   const [loading, setLoading] = useState(true)
   const [downloadingPdf, setDownloadingPdf] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -99,6 +100,24 @@ export function MiniAdminInspectionsOverview({ onUpdate }: InspectionsOverviewPr
     }
   }
 
+  const deleteInspection = async (inspectionId: string) => {
+    setDeletingId(inspectionId)
+    try {
+      const res = await fetch(`/api/mini-admin/inspections/${inspectionId}`, { method: 'DELETE' })
+      if (res.ok) {
+        fetchInspections()
+        toast({ title: 'Success', description: 'Inspection deleted' })
+      } else {
+        const err = await res.json()
+        toast({ title: 'Error', description: err.error || 'Failed to delete inspection', variant: 'destructive' })
+      }
+    } catch {
+      toast({ title: 'Error', description: 'An unexpected error occurred', variant: 'destructive' })
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
   if (loading) {
     return (
       <Card>
@@ -150,7 +169,7 @@ export function MiniAdminInspectionsOverview({ onUpdate }: InspectionsOverviewPr
                       <StatusBadge status={status} />
                     </TableCell>
                     <TableCell>{inspection.completedAt ? formatDate(new Date(inspection.completedAt)) : "-"}</TableCell>
-                    <TableCell>
+                    <TableCell className="space-x-2">
                       {inspection.status === "COMPLETED" && (
                         <Button
                           variant="outline"
@@ -169,6 +188,16 @@ export function MiniAdminInspectionsOverview({ onUpdate }: InspectionsOverviewPr
                               PDF
                             </>
                           )}
+                        </Button>
+                      )}
+                      {inspection.status === "PENDING" && (
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => deleteInspection(inspection.id)}
+                          disabled={deletingId === inspection.id}
+                        >
+                          {deletingId === inspection.id ? "Deleting..." : "Delete"}
                         </Button>
                       )}
                     </TableCell>

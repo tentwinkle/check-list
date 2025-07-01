@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { sendEmailUpdateNotification } from "@/lib/email"
 import { generateResetToken } from "@/lib/utils"
+import bcrypt from "bcryptjs"
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -38,7 +39,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { name, email } = await request.json()
+    const { name, email, password } = await request.json()
 
     const existingUser = await prisma.user.findUnique({ where: { id: params.id } })
 
@@ -68,6 +69,9 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
     if (emailChanged) {
       updateData.password = null
+    }
+    if (password) {
+      updateData.password = await bcrypt.hash(password, 12)
     }
 
     const user = await prisma.user.update({
