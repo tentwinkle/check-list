@@ -7,7 +7,6 @@ import { sendEmailUpdateNotification } from "@/lib/email"
 import { generateResetToken } from "@/lib/utils"
 import { createAuditLog } from "@/lib/audit"
 import bcrypt from "bcryptjs"
-import bcrypt from "bcryptjs"
 
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
