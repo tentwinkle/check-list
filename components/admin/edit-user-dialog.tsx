@@ -64,6 +64,7 @@ export function EditUserDialog({
 }: EditUserDialogProps) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [role, setRole] = useState("");
   const [areaId, setAreaId] = useState("");
   const [departmentId, setDepartmentId] = useState("");
@@ -126,6 +127,7 @@ export function EditUserDialog({
           role,
           areaId: areaId === "NONE" ? null : areaId,
           departmentId: departmentId === "NONE" ? null : departmentId,
+          password: password || undefined,
         }),
       });
 
@@ -185,16 +187,27 @@ export function EditUserDialog({
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="email">Email *</Label>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter email address"
-              required
-            />
-          </div>
+          <Label htmlFor="email">Email *</Label>
+          <Input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Enter email address"
+            required
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="password">Password (Optional)</Label>
+          <Input
+            id="password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Set new password"
+          />
+        </div>
           <div className="space-y-2">
             <Label htmlFor="role">Role *</Label>
             <Select value={role} onValueChange={setRole} required>

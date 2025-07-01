@@ -37,6 +37,7 @@ interface EditUserDialogProps {
 export function EditUserDialog({ user, open, onOpenChange, onSuccess }: EditUserDialogProps) {
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
   const [role, setRole] = useState("")
   const [departmentId, setDepartmentId] = useState("")
   const [departments, setDepartments] = useState<Department[]>([])
@@ -81,6 +82,7 @@ export function EditUserDialog({ user, open, onOpenChange, onSuccess }: EditUser
           email: email.trim(),
           role,
           departmentId: departmentId === "NONE" ? null : departmentId,
+          password: password || undefined,
         }),
       })
 
@@ -133,16 +135,27 @@ export function EditUserDialog({ user, open, onOpenChange, onSuccess }: EditUser
             <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter user name" />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="email">Email *</Label>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter email address"
-              required
-            />
-          </div>
+          <Label htmlFor="email">Email *</Label>
+          <Input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Enter email address"
+            required
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="password">Password (Optional)</Label>
+          <Input
+            id="password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Set new password"
+          />
+        </div>
           <div className="space-y-2">
             <Label htmlFor="role">Role *</Label>
             <Select value={role} onValueChange={setRole} required>

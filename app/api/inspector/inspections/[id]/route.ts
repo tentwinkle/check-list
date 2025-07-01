@@ -8,14 +8,13 @@ export async function GET(request: Request, { params }: { params: { id: string }
   try {
     const session: Session | null = await getServerSession(authOptions)
 
-    if (!session || session.user.role !== "INSPECTOR") {
+    if (!session || !["INSPECTOR", "MINI_ADMIN", "ADMIN"].includes(session.user.role)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const inspection = await prisma.inspectionInstance.findFirst({
       where: {
         id: params.id,
-        inspectorId: session.user.id,
       },
       include: {
         masterTemplate: {
@@ -27,6 +26,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
         department: {
           select: {
             name: true,
+            areaId: true,
           },
         },
         report: {
@@ -39,6 +39,19 @@ export async function GET(request: Request, { params }: { params: { id: string }
 
     if (!inspection) {
       return NextResponse.json({ error: "Inspection not found" }, { status: 404 })
+    }
+
+    if (
+      session.user.role === "INSPECTOR" &&
+      session.user.departmentId !== inspection.departmentId
+    ) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
+    if (
+      session.user.role === "MINI_ADMIN" &&
+      session.user.areaId !== inspection.department.areaId
+    ) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
     // Get checklist items with their results

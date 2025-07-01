@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { organizationName, organizationDescription, adminName, adminEmail } = await request.json()
+    const { organizationName, organizationDescription, adminName, adminEmail, adminPassword } = await request.json()
 
     // Check if email already exists (case-insensitive)
     const existingUser = await prisma.user.findFirst({
@@ -66,10 +66,16 @@ export async function POST(request: NextRequest) {
         },
       })
 
-      // Generate temporary password and reset token
-      const tempPassword = Math.random().toString(36).slice(-8)
-      const hashedPassword = await bcrypt.hash(tempPassword, 12)
-      const resetToken = generateResetToken()
+      let hashedPassword: string
+      let resetToken: string | null = null
+
+      if (adminPassword) {
+        hashedPassword = await bcrypt.hash(adminPassword, 12)
+      } else {
+        const tempPassword = Math.random().toString(36).slice(-8)
+        hashedPassword = await bcrypt.hash(tempPassword, 12)
+        resetToken = generateResetToken()
+      }
 
       // Create admin user
       const adminUser = await tx.user.create({
@@ -83,25 +89,29 @@ export async function POST(request: NextRequest) {
       })
 
       // Store reset token (you might want to create a separate table for this)
-      await tx.verificationToken.create({
-        data: {
-          identifier: adminEmail,
-          token: resetToken,
-          expires: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
-        },
-      })
+      if (resetToken) {
+        await tx.verificationToken.create({
+          data: {
+            identifier: adminEmail,
+            token: resetToken,
+            expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
+          },
+        })
+      }
 
       return { organization, adminUser, resetToken }
     })
 
     // Send account setup email
-    await sendAccountSetupEmail(
-      adminEmail,
-      adminName,
-      "Team Leader",
-      organizationName,
-      result.resetToken,
-    )
+    if (result.resetToken) {
+      await sendAccountSetupEmail(
+        adminEmail,
+        adminName,
+        "Team Leader",
+        organizationName,
+        result.resetToken,
+      )
+    }
 
     return NextResponse.json({
       message: "Organization created successfully",

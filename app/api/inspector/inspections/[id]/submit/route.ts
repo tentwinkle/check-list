@@ -8,7 +8,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
   try {
     const session: Session | null = await getServerSession(authOptions)
 
-    if (!session || session.user.role !== "INSPECTOR") {
+    if (!session || !["INSPECTOR", "MINI_ADMIN", "ADMIN"].includes(session.user.role)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -16,7 +16,6 @@ export async function POST(request: Request, { params }: { params: { id: string 
     const inspection = await prisma.inspectionInstance.findFirst({
       where: {
         id: params.id,
-        inspectorId: session.user.id,
       },
       include: {
         report: {
@@ -29,11 +28,25 @@ export async function POST(request: Request, { params }: { params: { id: string 
             checklistItems: true,
           },
         },
+        department: true,
       },
     })
 
     if (!inspection) {
       return NextResponse.json({ error: "Inspection not found" }, { status: 404 })
+    }
+
+    if (
+      session.user.role === "INSPECTOR" &&
+      session.user.departmentId !== inspection.departmentId
+    ) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
+    if (
+      session.user.role === "MINI_ADMIN" &&
+      session.user.areaId !== inspection.department.areaId
+    ) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
     if (inspection.status === "COMPLETED") {
@@ -61,6 +74,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
       data: {
         status: "COMPLETED",
         completedAt: new Date(),
+        inspectorId: session.user.id,
       },
     })
 

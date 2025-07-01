@@ -6,6 +6,8 @@ import { prisma } from "@/lib/prisma"
 import { sendEmailUpdateNotification } from "@/lib/email"
 import { generateResetToken } from "@/lib/utils"
 import { createAuditLog } from "@/lib/audit"
+import bcrypt from "bcryptjs"
+import bcrypt from "bcryptjs"
 
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -21,7 +23,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ error: "Area not found" }, { status: 400 })
     }
 
-    const { name, email, role, departmentId } = await request.json()
+    const { name, email, role, departmentId, password } = await request.json()
 
     // Verify user belongs to area
     const existingUser = await prisma.user.findFirst({
@@ -65,6 +67,17 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
     const emailChanged = email !== existingUser.email
 
+    const roleLevel: Record<string, number> = {
+      SUPER_ADMIN: 3,
+      ADMIN: 2,
+      MINI_ADMIN: 1,
+      INSPECTOR: 0,
+    }
+
+    if (roleLevel[existingUser.role] > roleLevel[session.user.role]) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
+
     const updateData: any = {
       name,
       email,
@@ -74,6 +87,9 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
     if (emailChanged) {
       updateData.password = null
+    }
+    if (password) {
+      updateData.password = await bcrypt.hash(password, 12)
     }
 
     const user = await prisma.user.update({

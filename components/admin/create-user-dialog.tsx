@@ -36,6 +36,7 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDi
   const [formData, setFormData] = useState({
     name: "",
     email: "",
+    password: "",
     role: "INSPECTOR",
     areaId: "",
     departmentId: "",
@@ -100,17 +101,21 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDi
             formData.departmentId === "" || formData.departmentId === "none"
               ? "NONE"
               : formData.departmentId,
+          password: formData.password || undefined,
         }),
       })
 
       if (response.ok) {
         toast({
           title: "Success",
-          description: "User created successfully. They will receive an email to set their password.",
+          description: formData.password
+            ? "User created successfully."
+            : "User created successfully. They will receive an email to set their password.",
         })
         setFormData({
           name: "",
           email: "",
+          password: "",
           role: "INSPECTOR",
           areaId: "",
           departmentId: "",
@@ -157,16 +162,27 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDi
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              required
-              disabled={loading}
-            />
-          </div>
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
+            type="email"
+            value={formData.email}
+            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            required
+            disabled={loading}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="password">Password (Optional)</Label>
+          <Input
+            id="password"
+            type="password"
+            value={formData.password}
+            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+            disabled={loading}
+          />
+        </div>
 
           <div className="space-y-2">
             <Label htmlFor="role">Role</Label>
