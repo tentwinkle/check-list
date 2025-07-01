@@ -6,7 +6,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { getInspectionStatus, formatDate } from "@/lib/utils"
-import { Download } from "lucide-react"
+import { Download, Play } from "lucide-react"
+import Link from "next/link"
 import { useToast } from "@/hooks/use-toast"
 
 interface InspectionInstance {
@@ -150,12 +151,24 @@ export function InspectionsOverview({ onUpdate }: InspectionsOverviewProps) {
                       <StatusBadge status={status} />
                     </TableCell>
                     <TableCell>{inspection.completedAt ? formatDate(new Date(inspection.completedAt)) : "-"}</TableCell>
-                    <TableCell>
+                    <TableCell className="space-x-2">
+                      {inspection.status !== "COMPLETED" && (
+                        <Button size="sm">
+                          <Link
+                            href={`/inspector/inspection/${inspection.id}`}
+                            className="flex items-center"
+                          >
+                            <Play className="mr-2 h-3 w-3" /> Start
+                          </Link>
+                        </Button>
+                      )}
                       {inspection.status === "COMPLETED" && (
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => downloadPDF(inspection.id, inspection.masterTemplate.name)}
+                          onClick={() =>
+                            downloadPDF(inspection.id, inspection.masterTemplate.name)
+                          }
                           disabled={downloadingPdf === inspection.id}
                         >
                           {downloadingPdf === inspection.id ? (
