@@ -47,7 +47,7 @@ export function SuperAdminDashboard() {
         <div className="mb-8 animate-fade-in">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent inline-block">
                 Super Admin Dashboard
               </h1>
               <p className="mt-2 text-gray-600 mobile-text">
@@ -65,7 +65,7 @@ export function SuperAdminDashboard() {
               <Building2 className="h-4 w-4 text-purple-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-purple-700 bg-clip-text text-transparent">
+              <div className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-purple-700 bg-clip-text text-transparent inline-block">
                 {stats.totalOrganizations}
               </div>
             </CardContent>
@@ -77,7 +77,7 @@ export function SuperAdminDashboard() {
               <Users className="h-4 w-4 text-purple-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-purple-700 bg-clip-text text-transparent">
+              <div className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-purple-700 bg-clip-text text-transparent inline-block">
                 {stats.totalUsers}
               </div>
             </CardContent>
@@ -89,7 +89,7 @@ export function SuperAdminDashboard() {
               <Activity className="h-4 w-4 text-purple-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-purple-700 bg-clip-text text-transparent">
+              <div className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-purple-700 bg-clip-text text-transparent inline-block">
                 {stats.activeInspections}
               </div>
             </CardContent>

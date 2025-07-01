@@ -104,7 +104,7 @@ export function AdminDashboard() {
         <div className="mb-8 animate-fade-in">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent inline-block">
                 Team Leader Dashboard
               </h1>
               <p className="mt-2 text-gray-600 mobile-text">
@@ -128,7 +128,7 @@ export function AdminDashboard() {
               <Building2 className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">
+              <div className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent inline-block">
                 {stats.totalAreas}
               </div>
               <p className="text-xs text-gray-600 mt-1">Active regions</p>
@@ -141,7 +141,7 @@ export function AdminDashboard() {
               <Building2 className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-emerald-600 to-emerald-700 bg-clip-text text-transparent">
+              <div className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-emerald-600 to-emerald-700 bg-clip-text text-transparent inline-block">
                 {stats.totalDepartments}
               </div>
               <p className="text-xs text-gray-600 mt-1">Total units</p>
@@ -154,7 +154,7 @@ export function AdminDashboard() {
               <Users className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-purple-600 to-purple-700 bg-clip-text text-transparent">
+              <div className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-purple-600 to-purple-700 bg-clip-text text-transparent inline-block">
                 {stats.totalUsers}
               </div>
               <p className="text-xs text-gray-600 mt-1">Team members</p>
@@ -167,7 +167,7 @@ export function AdminDashboard() {
               <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-amber-600 to-amber-700 bg-clip-text text-transparent">
+              <div className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-amber-600 to-amber-700 bg-clip-text text-transparent inline-block">
                 {stats.totalTemplates}
               </div>
               <p className="text-xs text-gray-600 mt-1">Inspection types</p>
@@ -180,7 +180,7 @@ export function AdminDashboard() {
               <Activity className="h-4 w-4 sm:h-5 sm:w-5 text-red-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-red-600 to-red-700 bg-clip-text text-transparent">
+              <div className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-red-600 to-red-700 bg-clip-text text-transparent inline-block">
                 {stats.activeInspections}
               </div>
               <p className="text-xs text-gray-600 mt-1">In progress</p>

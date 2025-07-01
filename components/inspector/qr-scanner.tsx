@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -8,7 +8,9 @@ import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
 import { Camera, Type } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { Html5Qrcode, CameraDevice } from "html5-qrcode"
+import dynamic from "next/dynamic"
+
+const QrScanner = dynamic(() => import("react-qr-barcode-scanner"), { ssr: false })
 
 interface QRScannerProps {
   open: boolean
@@ -18,43 +20,17 @@ interface QRScannerProps {
 export function QRScanner({ open, onClose }: QRScannerProps) {
   const [showManualInput, setShowManualInput] = useState(false)
   const [manualCode, setManualCode] = useState("")
-  const [cameras, setCameras] = useState<CameraDevice[]>([])
-  const [cameraId, setCameraId] = useState<string>("")
-  const [scanning, setScanning] = useState(false)
-  const scannerRef = useRef<Html5Qrcode | null>(null)
+  const [errorMsg, setErrorMsg] = useState("")
   const { toast } = useToast()
   const router = useRouter()
 
   useEffect(() => {
-    if (open && !showManualInput) {
-      Html5Qrcode.getCameras()
-        .then((devices) => {
-          setCameras(devices)
-          if (devices.length > 0) {
-            setCameraId(devices[0].id)
-          }
-        })
-        .catch((err) => {
-          console.error("Camera error:", err)
-          toast({
-            title: "Camera Permission Needed",
-            description: "Please allow camera access in your browser.",
-            variant: "destructive",
-          })
-          setShowManualInput(true)
-        })
+    if (!open) {
+      setManualCode("")
+      setShowManualInput(false)
+      setErrorMsg("")
     }
-
-    return () => {
-      if (scannerRef.current) {
-        scannerRef.current.stop().catch(() => {})
-        scannerRef.current.clear()
-        scannerRef.current = null
-      }
-      setScanning(false)
-    }
-  }, [open, showManualInput])
-
+  }, [open])
 
   const handleQRCodeFound = async (qrCodeId: string) => {
     try {
@@ -133,7 +109,7 @@ export function QRScanner({ open, onClose }: QRScannerProps) {
   const handleClose = () => {
     setManualCode("")
     setShowManualInput(false)
-    stopScan()
+    setErrorMsg("")
     onClose()
   }
 
@@ -148,8 +124,47 @@ export function QRScanner({ open, onClose }: QRScannerProps) {
         </DialogHeader>
 
         <div className="space-y-4">
-          {showManualInput ? (
-            <div className="space-y-4">
+          {!showManualInput ? (
+            <>
+              <div className="rounded-lg overflow-hidden bg-black">
+                <QrScanner
+                  onUpdate={(err, result) => {
+                    if (result) {
+                      handleQRCodeFound(result.text)
+                      setErrorMsg("") // Clear any previous error
+                    } else if (err) {
+                      if (
+                        err.name === "NotAllowedError" || // permission denied
+                        err.name === "NotFoundError" ||   // no camera found
+                        err.name === "NotReadableError"   // hardware issue
+                      ) {
+                        setErrorMsg("Camera access failed or is not supported by this device.")
+                      } else {
+                        setErrorMsg("") // clear message for harmless detection misses
+                      }
+                    }
+                  }}
+                  constraints={{ facingMode: "environment" }}
+                  style={{ width: "100%", height: "auto" }}
+                />
+              </div>
+              {errorMsg && (
+                <p className="text-sm text-red-500 text-center">{errorMsg}</p>
+              )}
+              <p className="text-sm text-gray-600 text-center">
+                Position the QR code within the frame
+              </p>
+              <Button
+                variant="outline"
+                onClick={() => setShowManualInput(true)}
+                className="w-full"
+              >
+                <Type className="mr-2 h-4 w-4" />
+                Enter Code Manually
+              </Button>
+            </>
+          ) : (
+            <>
               <div className="space-y-2">
                 <Label htmlFor="manual-code">QR Code</Label>
                 <Input
@@ -160,53 +175,19 @@ export function QRScanner({ open, onClose }: QRScannerProps) {
                   onKeyDown={(e) => e.key === "Enter" && handleManualSubmit()}
                 />
               </div>
-
               <div className="flex gap-2">
-                <Button onClick={handleManualSubmit} disabled={!manualCode.trim()} className="flex-1">
+                <Button
+                  onClick={handleManualSubmit}
+                  disabled={!manualCode.trim()}
+                  className="flex-1"
+                >
                   Find Item
                 </Button>
                 <Button variant="outline" onClick={() => setShowManualInput(false)}>
                   <Camera className="h-4 w-4" />
                 </Button>
               </div>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {scanning ? (
-                <>
-                  <div id="qr-reader" className="rounded-lg overflow-hidden" />
-                  <p className="text-sm text-gray-600 text-center">Point the camera at a QR code</p>
-                  <Button variant="outline" onClick={stopScan} className="w-full">
-                    Stop Scanning
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <div className="space-y-2">
-                    <Label htmlFor="camera-select">Camera</Label>
-                    <select
-                      id="camera-select"
-                      className="w-full rounded border px-3 py-2 bg-transparent"
-                      value={cameraId}
-                      onChange={(e) => setCameraId(e.target.value)}
-                    >
-                      {cameras.map((c) => (
-                        <option key={c.id} value={c.id} className="bg-gray-100 dark:bg-gray-800">
-                          {c.label || c.id}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <Button onClick={startScan} disabled={!cameraId} className="w-full">
-                    Start Scanning
-                  </Button>
-                  <Button variant="outline" onClick={() => setShowManualInput(true)} className="w-full">
-                    <Type className="mr-2 h-4 w-4" />
-                    Enter Code Manually
-                  </Button>
-                </>
-              )}
-            </div>
+            </>
           )}
         </div>
       </DialogContent>

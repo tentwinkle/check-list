@@ -159,7 +159,6 @@ export default function ProfilePage() {
         const err = await response.json()
         throw new Error(err.error || "Failed to upload image")
       }
-
       const updated = await response.json()
 
       setProfileImage(updated.image || null)
@@ -253,7 +252,7 @@ export default function ProfilePage() {
         <div className="max-w-4xl mx-auto space-y-8">
           {/* Header */}
           <div className="text-center space-y-4">
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 dark:from-gray-100 dark:to-gray-400 bg-clip-text text-transparent">
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 dark:from-gray-100 dark:to-gray-400 bg-clip-text text-transparent inline-block">
               Profile
             </h1>
             <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">

@@ -68,7 +68,7 @@ export function Navigation() {
             <Link href="/" className="flex items-center space-x-2 group">
               <span className="flex items-center space-x-2">
                 <Image src="/checklist-logo.png" alt="Logo" width={32} height={32} />
-                <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent hidden sm:block">
+                <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent hidden sm:inline-block">
                   Inspection System
                 </span>
               </span>
@@ -167,12 +167,12 @@ export function Navigation() {
               <div className="flex items-center space-x-3 p-3 rounded-lg bg-white/10">
                 <Avatar className="h-10 w-10 ring-2 ring-white/20">
                   {session.user.profileImage ? (
-                    <AvatarImage src={session.user.profileImage} alt="Avatar" />
-                  ) : (
-                    <AvatarFallback className="bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold">
-                      {getInitials(session.user.name || session.user.email)}
-                    </AvatarFallback>
-                  )}
+                      <AvatarImage src={session.user.profileImage} alt="Avatar" />
+                    ) : (
+                      <AvatarFallback className="bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold">
+                        {getInitials(session.user.name || session.user.email)}
+                      </AvatarFallback>
+                    )}
                 </Avatar>
                 <div>
                   <p className="font-semibold text-gray-900 dark:text-gray-100">{session.user.name}</p>
