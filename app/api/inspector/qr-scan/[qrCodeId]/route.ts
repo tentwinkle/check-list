@@ -8,7 +8,7 @@ export async function GET(request: Request, { params }: { params: { qrCodeId: st
   try {
     const session: Session | null = await getServerSession(authOptions)
 
-    if (!session || !["INSPECTOR", "MINI_ADMIN", "ADMIN"].includes(session.user.role)) {
+    if (!session || !["INSPECTOR", "MINI_ADMIN", "ADMIN", "SUPER_ADMIN"].includes(session.user.role)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
