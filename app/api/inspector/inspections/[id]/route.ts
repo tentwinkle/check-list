@@ -41,11 +41,16 @@ export async function GET(request: Request, { params }: { params: { id: string }
       return NextResponse.json({ error: "Inspection not found" }, { status: 404 })
     }
 
-    if (
-      session.user.role === "INSPECTOR" &&
-      session.user.departmentId !== inspection.departmentId
-    ) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    if (session.user.role === "INSPECTOR") {
+      if (session.user.departmentId !== inspection.departmentId) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+      }
+      if (
+        inspection.status === "COMPLETED" &&
+        inspection.inspectorId !== session.user.id
+      ) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+      }
     }
     if (
       session.user.role === "MINI_ADMIN" &&
