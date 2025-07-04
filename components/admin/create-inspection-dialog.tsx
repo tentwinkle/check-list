@@ -10,12 +10,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
 import { Loader2, Calendar, User, FileText } from "lucide-react"
+import { buildAdminApiUrl } from "@/lib/admin"
 import { format } from "date-fns"
 
 interface CreateInspectionDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSuccess: () => void
+  organizationId?: string
 }
 
 interface Template {
@@ -37,7 +39,7 @@ interface Inspector {
   }
 }
 
-export function CreateInspectionDialog({ open, onOpenChange, onSuccess }: CreateInspectionDialogProps) {
+export function CreateInspectionDialog({ open, onOpenChange, onSuccess, organizationId }: CreateInspectionDialogProps) {
   const [loading, setLoading] = useState(false)
   const [templates, setTemplates] = useState<Template[]>([])
   const [inspectors, setInspectors] = useState<Inspector[]>([])
@@ -57,7 +59,9 @@ export function CreateInspectionDialog({ open, onOpenChange, onSuccess }: Create
 
   const fetchTemplates = async () => {
     try {
-      const response = await fetch("/api/admin/templates")
+      const response = await fetch(
+        buildAdminApiUrl("/api/admin/templates", organizationId),
+      )
       if (response.ok) {
         const data = await response.json()
         setTemplates(data)
@@ -76,7 +80,9 @@ export function CreateInspectionDialog({ open, onOpenChange, onSuccess }: Create
 
   const fetchInspectors = async () => {
     try {
-      const response = await fetch("/api/admin/users")
+      const response = await fetch(
+        buildAdminApiUrl("/api/admin/users", organizationId),
+      )
       if (response.ok) {
         const data = await response.json()
         // Filter only inspectors
@@ -100,13 +106,16 @@ export function CreateInspectionDialog({ open, onOpenChange, onSuccess }: Create
     setLoading(true)
 
     try {
-      const response = await fetch("/api/admin/inspections/create", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const response = await fetch(
+        buildAdminApiUrl("/api/admin/inspections/create", organizationId),
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formData),
         },
-        body: JSON.stringify(formData),
-      })
+      )
 
       if (response.ok) {
         toast({

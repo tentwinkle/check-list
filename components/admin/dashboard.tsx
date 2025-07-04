@@ -11,6 +11,7 @@ import { DepartmentsManagement } from "./departments-management"
 import { UsersManagement } from "./users-management"
 import { TemplatesManagement } from "./templates-management"
 import { InspectionsOverview } from "./inspections-overview"
+import { buildAdminApiUrl } from "@/lib/admin"
 import { CreateInspectionDialog } from "./create-inspection-dialog"
 import {
   Building2,
@@ -38,7 +39,11 @@ interface DashboardStats {
   overdueInspections: number
 }
 
-export function AdminDashboard() {
+export function AdminDashboard({
+  organizationId,
+}: {
+  organizationId?: string
+}) {
   const { data: session } = useSession()
   const [stats, setStats] = useState<DashboardStats>({
     totalAreas: 0,
@@ -61,7 +66,9 @@ export function AdminDashboard() {
 
   const fetchStats = async () => {
     try {
-      const response = await fetch("/api/admin/stats")
+      const response = await fetch(
+        buildAdminApiUrl("/api/admin/stats", organizationId),
+      )
       if (response.ok) {
         const data = await response.json()
         setStats(data)
@@ -295,23 +302,26 @@ export function AdminDashboard() {
                   Create Inspection
                 </Button>
               </div>
-              <InspectionsOverview onUpdate={fetchStats} />
+              <InspectionsOverview
+                organizationId={organizationId}
+                onUpdate={fetchStats}
+              />
             </TabsContent>
 
             <TabsContent value="areas">
-              <AreasManagement onUpdate={fetchStats} />
+              <AreasManagement organizationId={organizationId} onUpdate={fetchStats} />
             </TabsContent>
 
             <TabsContent value="departments">
-              <DepartmentsManagement onUpdate={fetchStats} />
+              <DepartmentsManagement organizationId={organizationId} onUpdate={fetchStats} />
             </TabsContent>
 
             <TabsContent value="users">
-              <UsersManagement onUpdate={fetchStats} />
+              <UsersManagement organizationId={organizationId} onUpdate={fetchStats} />
             </TabsContent>
 
             <TabsContent value="templates">
-              <TemplatesManagement onUpdate={fetchStats} />
+              <TemplatesManagement organizationId={organizationId} onUpdate={fetchStats} />
             </TabsContent>
           </Tabs>
         </div>
@@ -320,6 +330,7 @@ export function AdminDashboard() {
           open={createInspectionOpen}
           onOpenChange={setCreateInspectionOpen}
           onSuccess={handleCreateInspectionSuccess}
+          organizationId={organizationId}
         />
       </div>
     </div>

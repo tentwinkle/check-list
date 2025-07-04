@@ -18,6 +18,7 @@ import {
   MoveUp,
   MoveDown,
 } from "lucide-react";
+import { buildAdminApiUrl } from "@/lib/admin";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,6 +41,7 @@ interface TemplateItemsListProps {
   refreshKey: number;
   onUpdate: () => void;
   onShowQR: (item: TemplateItem) => void;
+  organizationId?: string;
 }
 
 export function TemplateItemsList({
@@ -47,6 +49,7 @@ export function TemplateItemsList({
   refreshKey,
   onUpdate,
   onShowQR,
+  organizationId,
 }: TemplateItemsListProps) {
   const [items, setItems] = useState<TemplateItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -59,7 +62,10 @@ export function TemplateItemsList({
   const fetchItems = async () => {
     try {
       const response = await fetch(
-        `/api/admin/template-items?templateId=${templateId}`,
+        buildAdminApiUrl(
+          `/api/admin/template-items?templateId=${templateId}`,
+          organizationId,
+        ),
       );
       if (response.ok) {
         const data = await response.json();
@@ -75,7 +81,10 @@ export function TemplateItemsList({
   const handleReorder = async (itemId: string, direction: "up" | "down") => {
     try {
       const response = await fetch(
-        `/api/admin/template-items/${itemId}/reorder`,
+        buildAdminApiUrl(
+          `/api/admin/template-items/${itemId}/reorder`,
+          organizationId,
+        ),
         {
           method: "PUT",
           headers: {
@@ -108,9 +117,12 @@ export function TemplateItemsList({
     if (!confirm("Are you sure you want to delete this item?")) return;
 
     try {
-      const response = await fetch(`/api/admin/template-items/${itemId}`, {
-        method: "DELETE",
-      });
+      const response = await fetch(
+        buildAdminApiUrl(`/api/admin/template-items/${itemId}`, organizationId),
+        {
+          method: "DELETE",
+        },
+      );
 
       if (response.ok) {
         toast({

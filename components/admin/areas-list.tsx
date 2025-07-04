@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { EditAreaDialog } from "./edit-area-dialog"
 import { useToast } from "@/hooks/use-toast"
+import { buildAdminApiUrl } from "@/lib/admin"
 import { formatDate } from "@/lib/utils"
 
 interface Area {
@@ -33,9 +34,10 @@ interface Area {
 
 interface AreasListProps {
   onUpdate: () => void
+  organizationId?: string
 }
 
-export function AreasList({ onUpdate }: AreasListProps) {
+export function AreasList({ onUpdate, organizationId }: AreasListProps) {
   const [areas, setAreas] = useState<Area[]>([])
   const [loading, setLoading] = useState(true)
   const [editingArea, setEditingArea] = useState<Area | null>(null)
@@ -50,7 +52,9 @@ export function AreasList({ onUpdate }: AreasListProps) {
 
   const fetchAreas = async () => {
     try {
-      const response = await fetch("/api/admin/areas")
+      const response = await fetch(
+        buildAdminApiUrl("/api/admin/areas", organizationId),
+      )
       if (response.ok) {
         const data = await response.json()
         setAreas(data)
@@ -76,9 +80,12 @@ export function AreasList({ onUpdate }: AreasListProps) {
     if (!deletingArea) return
 
     try {
-      const response = await fetch(`/api/admin/areas/${deletingArea.id}`, {
-        method: "DELETE",
-      })
+      const response = await fetch(
+        buildAdminApiUrl(`/api/admin/areas/${deletingArea.id}`, organizationId),
+        {
+          method: "DELETE",
+        },
+      )
 
       if (response.ok) {
         toast({
@@ -178,6 +185,7 @@ export function AreasList({ onUpdate }: AreasListProps) {
           fetchAreas()
         }}
         area={editingArea}
+        organizationId={organizationId}
       />
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
