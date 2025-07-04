@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,15 +23,28 @@ import {
 } from "@/components/ui/alert-dialog"
 import { EditOrganizationDialog } from "./edit-organization-dialog"
 import { EditAdminDialog } from "./edit-admin-dialog"
-import { toast } from "sonner"
-import { MoreHorizontal, Edit, Trash2, User, Building, Calendar, Shield, Crown } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
+import { formatDate } from "@/lib/utils"
+import {
+  MoreHorizontal,
+  Edit,
+  Trash2,
+  UserCog,
+  Crown,
+  Building,
+  Calendar,
+  Shield,
+  Users,
+  MapPin,
+  Briefcase,
+} from "lucide-react"
 
 interface Organization {
   id: string
   name: string
-  description: string | null
+  description?: string
   createdAt: string
-  admin: {
+  admin?: {
     id: string
     name: string
     email: string
@@ -49,10 +63,13 @@ interface OrganizationsListProps {
 export function OrganizationsList({ onUpdate }: OrganizationsListProps) {
   const [organizations, setOrganizations] = useState<Organization[]>([])
   const [loading, setLoading] = useState(true)
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [editDialogOpen, setEditDialogOpen] = useState(false)
-  const [editAdminDialogOpen, setEditAdminDialogOpen] = useState(false)
-  const [selectedOrganization, setSelectedOrganization] = useState<Organization | null>(null)
+  const [editingOrganization, setEditingOrganization] = useState<Organization | null>(null)
+  const [deletingOrganization, setDeletingOrganization] = useState<Organization | null>(null)
+  const [showEditDialog, setShowEditDialog] = useState(false)
+  const [showEditAdminDialog, setShowEditAdminDialog] = useState(false)
+  const [editingAdminOrgId, setEditingAdminOrgId] = useState<string | null>(null)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const { toast } = useToast()
 
   useEffect(() => {
     fetchOrganizations()
@@ -63,47 +80,46 @@ export function OrganizationsList({ onUpdate }: OrganizationsListProps) {
       const response = await fetch("/api/super-admin/organizations")
       if (response.ok) {
         const data = await response.json()
+        console.log("Fetched organizations:", data) // Debug log
         setOrganizations(data)
       } else {
-        toast.error("Failed to fetch organizations")
+        toast({
+          title: "Error",
+          description: "Failed to fetch organizations",
+          variant: "destructive",
+        })
       }
     } catch (error) {
-      console.error("Error fetching organizations:", error)
-      toast.error("Failed to fetch organizations")
+      console.error("Failed to fetch organizations:", error)
+      toast({
+        title: "Error",
+        description: "Failed to fetch organizations",
+        variant: "destructive",
+      })
     } finally {
       setLoading(false)
     }
   }
 
-  const handleDelete = async () => {
-    if (!selectedOrganization) return
+  const handleEdit = (organization: Organization) => {
+    setEditingOrganization(organization)
+    setShowEditDialog(true)
+  }
 
-    try {
-      const response = await fetch(`/api/super-admin/organizations/${selectedOrganization.id}`, {
-        method: "DELETE",
-      })
+  const handleEditAdmin = (organization: Organization) => {
+    setEditingAdminOrgId(organization.id)
+    setShowEditAdminDialog(true)
+  }
 
-      if (response.ok) {
-        toast.success("Organization deleted successfully")
-        fetchOrganizations()
-        onUpdate()
-      } else {
-        const error = await response.json()
-        toast.error(error.error || "Failed to delete organization")
-      }
-    } catch (error) {
-      console.error("Error deleting organization:", error)
-      toast.error("Failed to delete organization")
-    } finally {
-      setDeleteDialogOpen(false)
-      setSelectedOrganization(null)
-    }
+  const handleDelete = (organization: Organization) => {
+    setDeletingOrganization(organization)
+    setShowDeleteDialog(true)
   }
 
   const handleLoginAsTeamLeader = (organization: Organization) => {
     try {
-      // Store Super Admin context in sessionStorage
-      const context = {
+      // Store the Super Admin context with specific organization
+      const superAdminContext = {
         originalRole: "SUPER_ADMIN",
         targetOrganization: {
           id: organization.id,
@@ -113,27 +129,59 @@ export function OrganizationsList({ onUpdate }: OrganizationsListProps) {
         timestamp: Date.now(),
       }
 
-      sessionStorage.setItem("superAdminContext", JSON.stringify(context))
+      sessionStorage.setItem("superAdminContext", JSON.stringify(superAdminContext))
 
-      // Show success message
-      toast.success(`Switching to Team Leader view for ${organization.name}`)
+      toast({
+        title: "Switching to Team Leader View",
+        description: `Accessing ${organization.name} as Team Leader`,
+      })
 
-      // Redirect to admin dashboard with a small delay to ensure context is set
+      // Use window.location.href for a full page reload to ensure context is properly set
       setTimeout(() => {
         window.location.href = "/admin"
       }, 500)
     } catch (error) {
-      console.error("Error setting Super Admin context:", error)
-      toast.error("Failed to switch to Team Leader view")
+      console.error("Failed to switch to team leader view:", error)
+      toast({
+        title: "Error",
+        description: "Failed to switch to team leader view",
+        variant: "destructive",
+      })
     }
   }
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    })
+  const confirmDelete = async () => {
+    if (!deletingOrganization) return
+
+    try {
+      const response = await fetch(`/api/super-admin/organizations/${deletingOrganization.id}`, {
+        method: "DELETE",
+      })
+
+      if (response.ok) {
+        toast({
+          title: "Success",
+          description: "Organization deleted successfully.",
+        })
+        setShowDeleteDialog(false)
+        setDeletingOrganization(null)
+        onUpdate()
+        fetchOrganizations()
+      } else {
+        const error = await response.json()
+        toast({
+          title: "Error",
+          description: error.message || "Failed to delete organization",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      })
+    }
   }
 
   if (loading) {
@@ -146,9 +194,14 @@ export function OrganizationsList({ onUpdate }: OrganizationsListProps) {
               <div className="h-4 bg-gray-200 rounded w-1/2"></div>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">
-                <div className="h-4 bg-gray-200 rounded w-full"></div>
-                <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+              <div className="space-y-3">
+                <div className="h-16 bg-gray-200 rounded"></div>
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="h-12 bg-gray-200 rounded"></div>
+                  <div className="h-12 bg-gray-200 rounded"></div>
+                  <div className="h-12 bg-gray-200 rounded"></div>
+                </div>
+                <div className="h-10 bg-gray-200 rounded"></div>
               </div>
             </CardContent>
           </Card>
@@ -173,55 +226,48 @@ export function OrganizationsList({ onUpdate }: OrganizationsListProps) {
     <>
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {organizations.map((organization) => (
-          <Card key={organization.id} className="glass hover:shadow-lg transition-all duration-300">
+          <Card
+            key={organization.id}
+            className="hover:shadow-lg transition-all duration-300 border-2 hover:border-blue-200"
+          >
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <CardTitle className="text-lg font-semibold text-gray-900 mb-1">{organization.name}</CardTitle>
+                  <CardTitle className="text-lg font-semibold text-gray-900 mb-1 flex items-center gap-2">
+                    <Building className="h-5 w-5 text-blue-600" />
+                    {organization.name}
+                  </CardTitle>
                   {organization.description && (
-                    <p className="text-sm text-gray-600 line-clamp-2">{organization.description}</p>
+                    <p className="text-sm text-gray-600 line-clamp-2 mt-1">{organization.description}</p>
                   )}
                 </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
                       <MoreHorizontal className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">
                     <DropdownMenuItem
                       onClick={() => handleLoginAsTeamLeader(organization)}
-                      className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                      className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 cursor-pointer"
                     >
                       <Crown className="mr-2 h-4 w-4" />
                       Login as Team Leader
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={() => {
-                        setSelectedOrganization(organization)
-                        setEditDialogOpen(true)
-                      }}
-                    >
+                    <DropdownMenuItem onClick={() => handleEdit(organization)} className="cursor-pointer">
                       <Edit className="mr-2 h-4 w-4" />
                       Edit Organization
                     </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => {
-                        setSelectedOrganization(organization)
-                        setEditAdminDialogOpen(true)
-                      }}
-                    >
-                      <User className="mr-2 h-4 w-4" />
-                      Edit Admin
+                    <DropdownMenuItem onClick={() => handleEditAdmin(organization)} className="cursor-pointer">
+                      <UserCog className="mr-2 h-4 w-4" />
+                      {organization.admin ? "Edit Admin" : "Assign Admin"}
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
-                      onClick={() => {
-                        setSelectedOrganization(organization)
-                        setDeleteDialogOpen(true)
-                      }}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      onClick={() => handleDelete(organization)}
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50 cursor-pointer"
                     >
                       <Trash2 className="mr-2 h-4 w-4" />
                       Delete Organization
@@ -240,37 +286,60 @@ export function OrganizationsList({ onUpdate }: OrganizationsListProps) {
                   </div>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900">{organization.admin?.name || "No Admin"}</p>
-                  <p className="text-sm text-gray-500 truncate">{organization.admin?.email || "No admin assigned"}</p>
+                  {organization.admin ? (
+                    <>
+                      <p className="text-sm font-medium text-gray-900 truncate">{organization.admin.name}</p>
+                      <p className="text-sm text-gray-500 truncate">{organization.admin.email}</p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-sm font-medium text-gray-500">No Admin Assigned</p>
+                      <p className="text-xs text-gray-400">Click "Assign Admin" to add one</p>
+                    </>
+                  )}
                 </div>
+                {organization.admin && (
+                  <Badge variant="secondary" className="bg-green-100 text-green-700 border-green-200">
+                    Active
+                  </Badge>
+                )}
               </div>
 
               {/* Stats */}
               <div className="grid grid-cols-3 gap-3">
-                <div className="text-center p-2 bg-blue-50 rounded-lg">
+                <div className="text-center p-3 bg-blue-50 rounded-lg border border-blue-100">
+                  <div className="flex items-center justify-center mb-1">
+                    <Users className="h-4 w-4 text-blue-600" />
+                  </div>
                   <div className="text-lg font-semibold text-blue-600">{organization._count.users}</div>
-                  <div className="text-xs text-blue-600">Users</div>
+                  <div className="text-xs text-blue-600 font-medium">Users</div>
                 </div>
-                <div className="text-center p-2 bg-green-50 rounded-lg">
+                <div className="text-center p-3 bg-green-50 rounded-lg border border-green-100">
+                  <div className="flex items-center justify-center mb-1">
+                    <MapPin className="h-4 w-4 text-green-600" />
+                  </div>
                   <div className="text-lg font-semibold text-green-600">{organization._count.areas}</div>
-                  <div className="text-xs text-green-600">Areas</div>
+                  <div className="text-xs text-green-600 font-medium">Areas</div>
                 </div>
-                <div className="text-center p-2 bg-purple-50 rounded-lg">
+                <div className="text-center p-3 bg-purple-50 rounded-lg border border-purple-100">
+                  <div className="flex items-center justify-center mb-1">
+                    <Briefcase className="h-4 w-4 text-purple-600" />
+                  </div>
                   <div className="text-lg font-semibold text-purple-600">{organization._count.departments}</div>
-                  <div className="text-xs text-purple-600">Departments</div>
+                  <div className="text-xs text-purple-600 font-medium">Departments</div>
                 </div>
               </div>
 
               {/* Created Date */}
-              <div className="flex items-center text-sm text-gray-500">
+              <div className="flex items-center text-sm text-gray-500 px-1">
                 <Calendar className="mr-2 h-4 w-4" />
-                Created {formatDate(organization.createdAt)}
+                Created {formatDate(new Date(organization.createdAt))}
               </div>
 
               {/* Quick Action Button */}
               <Button
                 onClick={() => handleLoginAsTeamLeader(organization)}
-                className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white"
+                className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-md hover:shadow-lg transition-all duration-200"
                 size="sm"
               >
                 <Crown className="mr-2 h-4 w-4" />
@@ -281,48 +350,67 @@ export function OrganizationsList({ onUpdate }: OrganizationsListProps) {
         ))}
       </div>
 
+      {/* Edit Organization Dialog */}
+      <EditOrganizationDialog
+        open={showEditDialog}
+        onOpenChange={setShowEditDialog}
+        onSuccess={() => {
+          onUpdate()
+          fetchOrganizations()
+        }}
+        organization={editingOrganization}
+      />
+
+      {/* Edit Admin Dialog */}
+      <EditAdminDialog
+        open={showEditAdminDialog}
+        onOpenChange={setShowEditAdminDialog}
+        onSuccess={() => {
+          onUpdate()
+          fetchOrganizations()
+        }}
+        organizationId={editingAdminOrgId}
+      />
+
       {/* Delete Confirmation Dialog */}
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Organization</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{selectedOrganization?.name}"? This action cannot be undone and will
-              permanently delete all associated data including users, areas, departments, and inspections.
+              Are you sure you want to delete "{deletingOrganization?.name}"? This action cannot be undone and will
+              permanently remove all associated data including:
+              {deletingOrganization && (
+                <div className="mt-3 space-y-1 text-sm font-medium">
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4" />
+                    {deletingOrganization._count.users} users
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4" />
+                    {deletingOrganization._count.areas} areas
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Briefcase className="h-4 w-4" />
+                    {deletingOrganization._count.departments} departments
+                  </div>
+                  <div className="text-red-600 mt-2">• All templates and inspections</div>
+                </div>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700 text-white">
+            <AlertDialogAction
+              onClick={confirmDelete}
+              disabled={!deletingOrganization}
+              className="bg-red-600 hover:bg-red-700"
+            >
               Delete Organization
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      {/* Edit Organization Dialog */}
-      <EditOrganizationDialog
-        open={editDialogOpen}
-        onOpenChange={setEditDialogOpen}
-        organization={selectedOrganization}
-        onSuccess={() => {
-          fetchOrganizations()
-          onUpdate()
-          setSelectedOrganization(null)
-        }}
-      />
-
-      {/* Edit Admin Dialog */}
-      <EditAdminDialog
-        open={editAdminDialogOpen}
-        onOpenChange={setEditAdminDialogOpen}
-        organizationId={selectedOrganization?.id}
-        onSuccess={() => {
-          fetchOrganizations()
-          onUpdate()
-          setSelectedOrganization(null)
-        }}
-      />
     </>
   )
 }
