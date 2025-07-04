@@ -9,9 +9,10 @@ import { DepartmentsList } from "./departments-list"
 
 interface DepartmentsManagementProps {
   onUpdate: () => void
+  organizationId?: string
 }
 
-export function DepartmentsManagement({ onUpdate }: DepartmentsManagementProps) {
+export function DepartmentsManagement({ onUpdate, organizationId }: DepartmentsManagementProps) {
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [listKey, setListKey] = useState(0)
 
@@ -30,7 +31,11 @@ export function DepartmentsManagement({ onUpdate }: DepartmentsManagementProps) 
         </div>
       </CardHeader>
       <CardContent>
-        <DepartmentsList key={listKey} onUpdate={onUpdate} />
+        <DepartmentsList
+          key={listKey}
+          onUpdate={onUpdate}
+          organizationId={organizationId}
+        />
       </CardContent>
 
       <CreateDepartmentDialog
@@ -40,6 +45,7 @@ export function DepartmentsManagement({ onUpdate }: DepartmentsManagementProps) 
           onUpdate()
           setListKey((k) => k + 1)
         }}
+        organizationId={organizationId}
       />
     </Card>
   )

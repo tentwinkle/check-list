@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { MoreHorizontal, Edit, Trash2, UserCog } from "lucide-react"
+import { MoreHorizontal, Edit, Trash2, UserCog, LogIn } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import {
   AlertDialog,
@@ -171,6 +171,12 @@ export function OrganizationsList({ onUpdate }: OrganizationsListProps) {
                     <DropdownMenuItem onClick={() => handleEditAdmin(org)}>
                       <UserCog className="mr-2 h-4 w-4" />
                       Edit Admin
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => {
+                      window.location.href = `/admin?organizationId=${org.id}`
+                    }}>
+                      <LogIn className="mr-2 h-4 w-4" />
+                      Login as Team Leader
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       className="text-red-600"

@@ -4,15 +4,19 @@ import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import type { Session } from "next-auth"
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const session: Session | null = await getServerSession(authOptions)
 
-    if (!session || session.user.role !== "ADMIN") {
+    if (!session || (!["ADMIN", "SUPER_ADMIN"].includes(session.user.role))) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const organizationId = session.user.organizationId
+    const { searchParams } = new URL(request.url)
+    const organizationId =
+      session.user.role === "SUPER_ADMIN"
+        ? searchParams.get("organizationId")
+        : session.user.organizationId
 
     if (!organizationId) {
       return NextResponse.json({ error: "Organization not found" }, { status: 400 })

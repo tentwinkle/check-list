@@ -11,11 +11,13 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
 import { Loader2 } from "lucide-react"
+import { buildAdminApiUrl } from "@/lib/admin"
 
 interface CreateTemplateDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSuccess: () => void
+  organizationId?: string
 }
 
 interface Department {
@@ -23,7 +25,7 @@ interface Department {
   name: string
 }
 
-export function CreateTemplateDialog({ open, onOpenChange, onSuccess }: CreateTemplateDialogProps) {
+export function CreateTemplateDialog({ open, onOpenChange, onSuccess, organizationId }: CreateTemplateDialogProps) {
   const [loading, setLoading] = useState(false)
   const [departments, setDepartments] = useState<Department[]>([])
   const [formData, setFormData] = useState({
@@ -42,7 +44,9 @@ export function CreateTemplateDialog({ open, onOpenChange, onSuccess }: CreateTe
 
   const fetchDepartments = async () => {
     try {
-      const response = await fetch("/api/admin/departments")
+      const response = await fetch(
+        buildAdminApiUrl("/api/admin/departments", organizationId),
+      )
       if (response.ok) {
         const data = await response.json()
         setDepartments(data)
@@ -57,17 +61,20 @@ export function CreateTemplateDialog({ open, onOpenChange, onSuccess }: CreateTe
     setLoading(true)
 
     try {
-      const response = await fetch("/api/admin/templates", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const response = await fetch(
+        buildAdminApiUrl("/api/admin/templates", organizationId),
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ...formData,
+            frequency: Number.parseInt(formData.frequency),
+            departmentId: formData.departmentId === "" ? "none" : formData.departmentId,
+          }),
         },
-        body: JSON.stringify({
-          ...formData,
-          frequency: Number.parseInt(formData.frequency),
-          departmentId: formData.departmentId === "" ? "none" : formData.departmentId,
-        }),
-      })
+      )
 
       if (response.ok) {
         toast({

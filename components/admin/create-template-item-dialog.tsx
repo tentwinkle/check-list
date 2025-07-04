@@ -10,15 +10,17 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import { Loader2 } from "lucide-react"
+import { buildAdminApiUrl } from "@/lib/admin"
 
 interface CreateTemplateItemDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSuccess: () => void
   templateId: string
+  organizationId?: string
 }
 
-export function CreateTemplateItemDialog({ open, onOpenChange, onSuccess, templateId }: CreateTemplateItemDialogProps) {
+export function CreateTemplateItemDialog({ open, onOpenChange, onSuccess, templateId, organizationId }: CreateTemplateItemDialogProps) {
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     name: "",
@@ -32,16 +34,19 @@ export function CreateTemplateItemDialog({ open, onOpenChange, onSuccess, templa
     setLoading(true)
 
     try {
-      const response = await fetch("/api/admin/template-items", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const response = await fetch(
+        buildAdminApiUrl("/api/admin/template-items", organizationId),
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ...formData,
+            templateId,
+          }),
         },
-        body: JSON.stringify({
-          ...formData,
-          templateId,
-        }),
-      })
+      )
 
       if (response.ok) {
         toast({

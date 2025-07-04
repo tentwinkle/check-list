@@ -11,11 +11,13 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
 import { Loader2 } from "lucide-react"
+import { buildAdminApiUrl } from "@/lib/admin"
 
 interface CreateDepartmentDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSuccess: () => void
+  organizationId?: string
 }
 
 interface Area {
@@ -23,7 +25,12 @@ interface Area {
   name: string
 }
 
-export function CreateDepartmentDialog({ open, onOpenChange, onSuccess }: CreateDepartmentDialogProps) {
+export function CreateDepartmentDialog({
+  open,
+  onOpenChange,
+  onSuccess,
+  organizationId,
+}: CreateDepartmentDialogProps) {
   const [loading, setLoading] = useState(false)
   const [areas, setAreas] = useState<Area[]>([])
   const [formData, setFormData] = useState({
@@ -41,7 +48,9 @@ export function CreateDepartmentDialog({ open, onOpenChange, onSuccess }: Create
 
   const fetchAreas = async () => {
     try {
-      const response = await fetch("/api/admin/areas")
+      const response = await fetch(
+        buildAdminApiUrl("/api/admin/areas", organizationId),
+      )
       if (response.ok) {
         const data = await response.json()
         setAreas(data)
@@ -56,13 +65,16 @@ export function CreateDepartmentDialog({ open, onOpenChange, onSuccess }: Create
     setLoading(true)
 
     try {
-      const response = await fetch("/api/admin/departments", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const response = await fetch(
+        buildAdminApiUrl("/api/admin/departments", organizationId),
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formData),
         },
-        body: JSON.stringify(formData),
-      })
+      )
 
       if (response.ok) {
         toast({

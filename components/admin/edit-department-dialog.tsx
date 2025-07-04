@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "sonner"
+import { buildAdminApiUrl } from "@/lib/admin"
 
 interface Area {
   id: string
@@ -43,9 +44,16 @@ interface EditDepartmentDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSuccess: () => void
+  organizationId?: string
 }
 
-export function EditDepartmentDialog({ department, open, onOpenChange, onSuccess }: EditDepartmentDialogProps) {
+export function EditDepartmentDialog({
+  department,
+  open,
+  onOpenChange,
+  onSuccess,
+  organizationId,
+}: EditDepartmentDialogProps) {
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
   const [areaId, setAreaId] = useState<string>("")
@@ -68,7 +76,9 @@ export function EditDepartmentDialog({ department, open, onOpenChange, onSuccess
 
   const fetchAreas = async () => {
     try {
-      const response = await fetch("/api/admin/areas")
+      const response = await fetch(
+        buildAdminApiUrl("/api/admin/areas", organizationId),
+      )
       if (response.ok) {
         const data = await response.json()
         setAreas(data)
@@ -84,17 +94,20 @@ export function EditDepartmentDialog({ department, open, onOpenChange, onSuccess
 
     setLoading(true)
     try {
-      const response = await fetch(`/api/admin/departments/${department.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
+      const response = await fetch(
+        buildAdminApiUrl(`/api/admin/departments/${department.id}`, organizationId),
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name,
+            description: description || undefined,
+            areaId: areaId === "NONE" ? null : areaId,
+          }),
         },
-        body: JSON.stringify({
-          name,
-          description: description || undefined,
-          areaId: areaId === "NONE" ? null : areaId,
-        }),
-      })
+      )
 
       if (response.ok) {
         toast.success("Department updated successfully")

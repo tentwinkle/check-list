@@ -18,6 +18,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { EditTemplateDialog } from "./edit-template-dialog"
+import { buildAdminApiUrl } from "@/lib/admin"
 import { useToast } from "@/hooks/use-toast"
 
 interface Template {
@@ -37,9 +38,10 @@ interface Template {
 
 interface TemplatesListProps {
   onUpdate: () => void
+  organizationId?: string
 }
 
-export function TemplatesList({ onUpdate }: TemplatesListProps) {
+export function TemplatesList({ onUpdate, organizationId }: TemplatesListProps) {
   const [templates, setTemplates] = useState<Template[]>([])
   const [loading, setLoading] = useState(true)
   const [editingTemplate, setEditingTemplate] = useState<Template | null>(null)
@@ -54,7 +56,9 @@ export function TemplatesList({ onUpdate }: TemplatesListProps) {
 
   const fetchTemplates = async () => {
     try {
-      const response = await fetch("/api/admin/templates")
+      const response = await fetch(
+        buildAdminApiUrl("/api/admin/templates", organizationId),
+      )
       if (response.ok) {
         const data = await response.json()
         setTemplates(data)
@@ -80,9 +84,12 @@ export function TemplatesList({ onUpdate }: TemplatesListProps) {
     if (!deletingTemplate) return
 
     try {
-      const response = await fetch(`/api/admin/templates/${deletingTemplate.id}`, {
-        method: "DELETE",
-      })
+      const response = await fetch(
+        buildAdminApiUrl(`/api/admin/templates/${deletingTemplate.id}`, organizationId),
+        {
+          method: "DELETE",
+        },
+      )
 
       if (response.ok) {
         toast({
@@ -193,6 +200,7 @@ export function TemplatesList({ onUpdate }: TemplatesListProps) {
           onUpdate()
           fetchTemplates()
         }}
+        organizationId={organizationId}
       />
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>

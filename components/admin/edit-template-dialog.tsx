@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "sonner"
+import { buildAdminApiUrl } from "@/lib/admin"
 
 interface Template {
   id: string
@@ -45,9 +46,10 @@ interface EditTemplateDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onTemplateUpdated: () => void
+  organizationId?: string
 }
 
-export function EditTemplateDialog({ template, open, onOpenChange, onTemplateUpdated }: EditTemplateDialogProps) {
+export function EditTemplateDialog({ template, open, onOpenChange, onTemplateUpdated, organizationId }: EditTemplateDialogProps) {
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
   const [departmentId, setDepartmentId] = useState<string>("none")
@@ -70,7 +72,9 @@ export function EditTemplateDialog({ template, open, onOpenChange, onTemplateUpd
 
   const fetchDepartments = async () => {
     try {
-      const response = await fetch("/api/admin/departments")
+      const response = await fetch(
+        buildAdminApiUrl("/api/admin/departments", organizationId),
+      )
       if (response.ok) {
         const data = await response.json()
         setDepartments(data)
@@ -86,17 +90,20 @@ export function EditTemplateDialog({ template, open, onOpenChange, onTemplateUpd
 
     setIsLoading(true)
     try {
-      const response = await fetch(`/api/admin/templates/${template.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+      const response = await fetch(
+        buildAdminApiUrl(`/api/admin/templates/${template.id}`, organizationId),
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
           name,
           description: description || null,
           departmentId: departmentId === "none" ? null : departmentId,
         }),
-      })
+        },
+      )
 
       if (response.ok) {
         toast.success("Template updated successfully")

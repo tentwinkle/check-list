@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Download, Printer } from "lucide-react"
+import { buildAdminApiUrl } from "@/lib/admin"
 import { useToast } from "@/hooks/use-toast"
 
 interface QRCodeDialogProps {
@@ -12,6 +13,7 @@ interface QRCodeDialogProps {
   onOpenChange: (open: boolean) => void
   templateId: string
   selectedItem?: any
+  organizationId?: string
 }
 
 interface TemplateItem {
@@ -22,7 +24,7 @@ interface TemplateItem {
   qrCodeUrl: string
 }
 
-export function QRCodeDialog({ open, onOpenChange, templateId, selectedItem }: QRCodeDialogProps) {
+export function QRCodeDialog({ open, onOpenChange, templateId, selectedItem, organizationId }: QRCodeDialogProps) {
   const [items, setItems] = useState<TemplateItem[]>([])
   const [loading, setLoading] = useState(true)
   const { toast } = useToast()
@@ -35,7 +37,12 @@ export function QRCodeDialog({ open, onOpenChange, templateId, selectedItem }: Q
 
   const fetchQRCodes = async () => {
     try {
-      const response = await fetch(`/api/admin/template-items/qr-codes?templateId=${templateId}`)
+      const response = await fetch(
+        buildAdminApiUrl(
+          `/api/admin/template-items/qr-codes?templateId=${templateId}`,
+          organizationId,
+        ),
+      )
       if (response.ok) {
         const data = await response.json()
         setItems(data)
@@ -49,7 +56,12 @@ export function QRCodeDialog({ open, onOpenChange, templateId, selectedItem }: Q
 
   const handleDownload = async (item: TemplateItem) => {
     try {
-      const response = await fetch(`/api/admin/template-items/qr-codes/${item.id}/download`)
+      const response = await fetch(
+        buildAdminApiUrl(
+          `/api/admin/template-items/qr-codes/${item.id}/download`,
+          organizationId,
+        ),
+      )
       if (response.ok) {
         const blob = await response.blob()
         const url = window.URL.createObjectURL(blob)
