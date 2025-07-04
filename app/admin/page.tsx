@@ -2,9 +2,13 @@
 
 import { useSession } from "next-auth/react"
 import { useEffect, useState } from "react"
-import { redirect } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { AdminDashboard } from "@/components/admin/dashboard"
-import { Skeleton } from "@/components/ui/skeleton"
+import { Navigation } from "@/components/ui/navigation"
+import { Card, CardContent } from "@/components/ui/card"
+import { Loader2, Crown, Building } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 
 interface SuperAdminContext {
   originalRole: string
@@ -18,103 +22,99 @@ interface SuperAdminContext {
 
 export default function AdminPage() {
   const { data: session, status } = useSession()
+  const router = useRouter()
+  const [loading, setLoading] = useState(true)
   const [superAdminContext, setSuperAdminContext] = useState<SuperAdminContext | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     if (status === "loading") return
 
+    if (status === "unauthenticated") {
+      router.push("/auth/signin")
+      return
+    }
+
+    // Check if user has admin access or is Super Admin
+    if (session?.user?.role !== "ADMIN" && session?.user?.role !== "SUPER_ADMIN") {
+      router.push("/")
+      return
+    }
+
     // Check for Super Admin context
-    const contextData = sessionStorage.getItem("superAdminContext")
-    if (contextData) {
-      try {
+    try {
+      const contextData = sessionStorage.getItem("superAdminContext")
+      if (contextData) {
         const context = JSON.parse(contextData) as SuperAdminContext
         if (context.originalRole === "SUPER_ADMIN" && context.loginAsAdmin) {
           setSuperAdminContext(context)
-          setIsLoading(false)
-          return
         }
-      } catch (error) {
-        console.error("Failed to parse super admin context:", error)
-        sessionStorage.removeItem("superAdminContext")
       }
+    } catch (error) {
+      console.error("Failed to parse Super Admin context:", error)
+      sessionStorage.removeItem("superAdminContext")
     }
 
-    // Check if user has admin access
-    if (status === "authenticated") {
-      if (!session?.user?.role || !["ADMIN", "SUPER_ADMIN"].includes(session.user.role)) {
-        redirect("/")
-      }
-      setIsLoading(false)
-    } else if (status === "unauthenticated") {
-      redirect("/auth/signin")
-    }
-  }, [session, status])
+    setLoading(false)
+  }, [session, status, router])
 
-  if (status === "loading" || isLoading) {
+  const handleReturnToSuperAdmin = () => {
+    sessionStorage.removeItem("superAdminContext")
+    router.push("/super-admin")
+  }
+
+  if (loading || status === "loading") {
     return (
-      <div className="container mx-auto p-6 space-y-6">
-        <div className="space-y-2">
-          <Skeleton className="h-8 w-64" />
-          <Skeleton className="h-4 w-96" />
-        </div>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-32" />
-          ))}
-        </div>
-        <div className="space-y-4">
-          <Skeleton className="h-8 w-48" />
-          <Skeleton className="h-64 w-full" />
-        </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-600 mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Loading Dashboard</h3>
+            <p className="text-sm text-gray-600 text-center">Please wait while we prepare your admin dashboard...</p>
+          </CardContent>
+        </Card>
       </div>
     )
   }
 
   if (!session) {
-    redirect("/auth/signin")
-  }
-
-  // Determine the organization context
-  const organizationId = superAdminContext ? superAdminContext.targetOrganization.id : session.user.organizationId
-
-  if (!organizationId && !superAdminContext) {
-    return (
-      <div className="container mx-auto p-6">
-        <div className="text-center py-12">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">No Organization Access</h2>
-          <p className="text-gray-600">You don't have access to any organization. Please contact your administrator.</p>
-        </div>
-      </div>
-    )
+    return null
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      <div className="container mx-auto p-6">
+    <div className="min-h-screen bg-gray-50">
+      <Navigation />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Super Admin Context Header */}
         {superAdminContext && (
-          <div className="mb-6 p-4 bg-purple-50 border border-purple-200 rounded-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-semibold text-purple-900">Super Admin Mode</h3>
-                <p className="text-sm text-purple-700">
-                  Managing organization: <strong>{superAdminContext.targetOrganization.name}</strong>
-                </p>
+          <div className="mb-6 p-4 bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-2">
+                  <Crown className="h-5 w-5 text-purple-600" />
+                  <Badge variant="outline" className="bg-purple-100 text-purple-700 border-purple-300">
+                    Super Admin View
+                  </Badge>
+                </div>
+                <div className="flex items-center space-x-2 text-sm text-gray-600">
+                  <Building className="h-4 w-4" />
+                  <span>
+                    Managing: <strong>{superAdminContext.targetOrganization.name}</strong>
+                  </span>
+                </div>
               </div>
-              <button
-                onClick={() => {
-                  sessionStorage.removeItem("superAdminContext")
-                  window.location.href = "/super-admin"
-                }}
-                className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors"
+              <Button
+                variant="outline"
+                onClick={handleReturnToSuperAdmin}
+                className="bg-white hover:bg-purple-50 border-purple-200 text-purple-700"
               >
                 Return to Super Admin
-              </button>
+              </Button>
             </div>
           </div>
         )}
 
-        <AdminDashboard organizationId={organizationId} />
+        <AdminDashboard organizationId={superAdminContext?.targetOrganization.id} />
       </div>
     </div>
   )
