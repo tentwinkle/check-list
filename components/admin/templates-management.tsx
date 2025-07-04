@@ -9,9 +9,13 @@ import { TemplatesList } from "./templates-list"
 
 interface TemplatesManagementProps {
   onUpdate: () => void
+  organizationId?: string
 }
 
-export function TemplatesManagement({ onUpdate }: TemplatesManagementProps) {
+export function TemplatesManagement({
+  onUpdate,
+  organizationId,
+}: TemplatesManagementProps) {
   const [showCreateDialog, setShowCreateDialog] = useState(false)
 
   return (
@@ -29,10 +33,15 @@ export function TemplatesManagement({ onUpdate }: TemplatesManagementProps) {
         </div>
       </CardHeader>
       <CardContent>
-        <TemplatesList onUpdate={onUpdate} />
+        <TemplatesList onUpdate={onUpdate} organizationId={organizationId} />
       </CardContent>
 
-      <CreateTemplateDialog open={showCreateDialog} onOpenChange={setShowCreateDialog} onSuccess={onUpdate} />
+      <CreateTemplateDialog
+        open={showCreateDialog}
+        onOpenChange={setShowCreateDialog}
+        onSuccess={onUpdate}
+        organizationId={organizationId}
+      />
     </Card>
   )
 }
