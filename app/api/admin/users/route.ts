@@ -7,16 +7,17 @@ import { sendAccountSetupEmail } from "@/lib/email"
 import { createAuditLog } from "@/lib/audit"
 import { generateResetToken } from "@/lib/utils"
 import bcrypt from "bcryptjs"
+import { extractOrganizationId } from "@/lib/admin"
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const session: Session | null = await getServerSession(authOptions)
 
-    if (!session || session.user.role !== "ADMIN") {
+    if (!session || !["ADMIN", "SUPER_ADMIN"].includes(session.user.role)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const organizationId = session.user.organizationId
+    const organizationId = extractOrganizationId(session, request)
 
     if (!organizationId) {
       return NextResponse.json({ error: "Organization not found" }, { status: 400 })
@@ -52,11 +53,11 @@ export async function POST(request: NextRequest) {
   try {
     const session: Session | null = await getServerSession(authOptions)
 
-    if (!session || session.user.role !== "ADMIN") {
+    if (!session || !["ADMIN", "SUPER_ADMIN"].includes(session.user.role)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const organizationId = session.user.organizationId
+    const organizationId = extractOrganizationId(session, request)
 
     if (!organizationId) {
       return NextResponse.json({ error: "Organization not found" }, { status: 400 })

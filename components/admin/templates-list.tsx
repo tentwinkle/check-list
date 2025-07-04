@@ -170,7 +170,17 @@ export function TemplatesList({ onUpdate, organizationId }: TemplatesListProps) 
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => window.open(`/admin/templates/${template.id}/items`, "_blank")}>
+                    <DropdownMenuItem
+                      onClick={() =>
+                        window.open(
+                          buildAdminApiUrl(
+                            `/admin/templates/${template.id}/items`,
+                            organizationId,
+                          ),
+                          "_blank",
+                        )
+                      }
+                    >
                       <Eye className="mr-2 h-4 w-4" />
                       Manage Items
                     </DropdownMenuItem>

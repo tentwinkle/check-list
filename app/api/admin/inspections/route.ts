@@ -3,16 +3,17 @@ import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import type { Session } from "next-auth"
 import { prisma } from "@/lib/prisma"
+import { extractOrganizationId } from "@/lib/admin"
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const session: Session | null = await getServerSession(authOptions)
 
-    if (!session || session.user.role !== "ADMIN") {
+    if (!session || !["ADMIN", "SUPER_ADMIN"].includes(session.user.role)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const organizationId = session.user.organizationId
+    const organizationId = extractOrganizationId(session, request)
 
     if (!organizationId) {
       return NextResponse.json({ error: "Organization not found" }, { status: 400 })
