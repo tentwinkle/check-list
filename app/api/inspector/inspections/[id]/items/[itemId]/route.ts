@@ -127,8 +127,19 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       })
     }
 
+    const result = await prisma.reportItemResult.findUnique({
+      where: {
+        checklistItemId_inspectionReportId: {
+          checklistItemId: params.itemId,
+          inspectionReportId: report.id,
+        },
+      },
+      select: { imageUrl: true },
+    })
+
     return NextResponse.json({
       message: "Item result saved successfully",
+      result,
     })
   } catch (error) {
     console.error("Error saving item result:", error)

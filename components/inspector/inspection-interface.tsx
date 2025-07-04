@@ -109,7 +109,12 @@ export function InspectionInterface({ inspectionId }: InspectionInterfaceProps) 
     }
   }
 
-  const saveItemResult = async (itemId: string, approved: boolean, comments?: string, imageFile?: File) => {
+  const saveItemResult = async (
+    itemId: string,
+    approved: boolean,
+    comments?: string,
+    imageFile?: File,
+  ): Promise<string | undefined> => {
     setSaving(true)
 
     try {
@@ -124,11 +129,13 @@ export function InspectionInterface({ inspectionId }: InspectionInterfaceProps) 
       })
 
       if (response.ok) {
+        const data = await response.json()
         toast({
           title: "Success",
           description: "Item result saved",
         })
         fetchInspection() // Refresh data
+        return data.result?.imageUrl as string | undefined
       } else {
         const error = await response.json()
         toast({
@@ -136,6 +143,7 @@ export function InspectionInterface({ inspectionId }: InspectionInterfaceProps) 
           description: error.message || "Failed to save result",
           variant: "destructive",
         })
+        return undefined
       }
     } catch (error) {
       toast({
@@ -146,6 +154,8 @@ export function InspectionInterface({ inspectionId }: InspectionInterfaceProps) 
     } finally {
       setSaving(false)
     }
+
+    return undefined
   }
 
   const submitInspection = async () => {
@@ -414,7 +424,12 @@ export function InspectionInterface({ inspectionId }: InspectionInterfaceProps) 
 
 interface InspectionItemFormProps {
   item: InspectionItem
-  onSave: (itemId: string, approved: boolean, comments?: string, imageFile?: File) => void
+  onSave: (
+    itemId: string,
+    approved: boolean,
+    comments?: string,
+    imageFile?: File,
+  ) => Promise<string | undefined>
   saving: boolean
   disabled: boolean
 }
@@ -444,8 +459,17 @@ function InspectionItemForm({ item, onSave, saving, disabled }: InspectionItemFo
     }
   }
 
-  const handleSave = () => {
-    onSave(item.id, approved, comments || undefined, imageFile || undefined)
+  const handleSave = async () => {
+    const url = await onSave(
+      item.id,
+      approved,
+      comments || undefined,
+      imageFile || undefined,
+    )
+    if (url) {
+      setImageFile(null)
+      setImagePreview(url)
+    }
   }
 
   return (
