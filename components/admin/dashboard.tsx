@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
 import { Navigation } from "@/components/ui/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import Link from "next/link"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { AreasManagement } from "./areas-management"
@@ -119,6 +120,13 @@ export function AdminDashboard({
               </p>
             </div>
             <div className="flex items-center gap-2">
+              {session?.user?.role === "SUPER_ADMIN" && (
+                <Link href="/super-admin">
+                  <Button variant="ghost" className="glass">
+                    Back to Super Admin
+                  </Button>
+                </Link>
+              )}
               <div className="px-3 py-1.5 bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 rounded-full text-sm font-medium">
                 <TrendingUp className="inline h-4 w-4 mr-1" />
                 All Systems Active
