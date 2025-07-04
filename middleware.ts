@@ -6,28 +6,28 @@ export default withAuth(
     const token = req.nextauth.token
     const { pathname } = req.nextUrl
 
-    // Allow access to public routes
-    if (
-      pathname.startsWith("/auth") ||
-      pathname.startsWith("/api/auth") ||
-      pathname.startsWith("/_next") ||
-      pathname.startsWith("/favicon") ||
-      pathname === "/"
-    ) {
+    // Allow access to auth pages
+    if (pathname.startsWith("/auth/")) {
       return NextResponse.next()
+    }
+
+    // Redirect to signin if no token
+    if (!token) {
+      return NextResponse.redirect(new URL("/auth/signin", req.url))
+    }
+
+    // Check for Super Admin context in admin routes
+    if (pathname.startsWith("/admin")) {
+      // Allow Super Admin to access admin routes (they can act as Team Leader)
+      if (token.role === "SUPER_ADMIN" || token.role === "ADMIN") {
+        return NextResponse.next()
+      }
+      return NextResponse.redirect(new URL("/", req.url))
     }
 
     // Super Admin routes
     if (pathname.startsWith("/super-admin")) {
-      if (token?.role !== "SUPER_ADMIN") {
-        return NextResponse.redirect(new URL("/", req.url))
-      }
-      return NextResponse.next()
-    }
-
-    // Admin routes - allow ADMIN, MINI_ADMIN, and SUPER_ADMIN
-    if (pathname.startsWith("/admin")) {
-      if (!["ADMIN", "MINI_ADMIN", "SUPER_ADMIN"].includes(token?.role as string)) {
+      if (token.role !== "SUPER_ADMIN") {
         return NextResponse.redirect(new URL("/", req.url))
       }
       return NextResponse.next()
@@ -35,7 +35,7 @@ export default withAuth(
 
     // Mini Admin routes
     if (pathname.startsWith("/mini-admin")) {
-      if (!["MINI_ADMIN", "ADMIN", "SUPER_ADMIN"].includes(token?.role as string)) {
+      if (token.role !== "MINI_ADMIN") {
         return NextResponse.redirect(new URL("/", req.url))
       }
       return NextResponse.next()
@@ -43,29 +43,10 @@ export default withAuth(
 
     // Inspector routes
     if (pathname.startsWith("/inspector")) {
-      if (!["INSPECTOR", "MINI_ADMIN", "ADMIN", "SUPER_ADMIN"].includes(token?.role as string)) {
+      if (token.role !== "INSPECTOR") {
         return NextResponse.redirect(new URL("/", req.url))
       }
       return NextResponse.next()
-    }
-
-    // API routes protection
-    if (pathname.startsWith("/api/super-admin")) {
-      if (token?.role !== "SUPER_ADMIN") {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-      }
-    }
-
-    if (pathname.startsWith("/api/admin")) {
-      if (!["ADMIN", "SUPER_ADMIN"].includes(token?.role as string)) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-      }
-    }
-
-    if (pathname.startsWith("/api/mini-admin")) {
-      if (!["MINI_ADMIN", "ADMIN", "SUPER_ADMIN"].includes(token?.role as string)) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-      }
     }
 
     return NextResponse.next()
@@ -73,19 +54,14 @@ export default withAuth(
   {
     callbacks: {
       authorized: ({ token, req }) => {
-        // Allow access to public routes without token
         const { pathname } = req.nextUrl
-        if (
-          pathname.startsWith("/auth") ||
-          pathname.startsWith("/api/auth") ||
-          pathname.startsWith("/_next") ||
-          pathname.startsWith("/favicon") ||
-          pathname === "/"
-        ) {
+
+        // Allow access to auth pages without token
+        if (pathname.startsWith("/auth/")) {
           return true
         }
 
-        // Require token for all other routes
+        // Require token for all other protected routes
         return !!token
       },
     },
@@ -96,11 +72,12 @@ export const config = {
   matcher: [
     /*
      * Match all request paths except for the ones starting with:
+     * - api/auth (NextAuth API routes)
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
-     * - public folder
+     * - public folder files
      */
-    "/((?!_next/static|_next/image|favicon.ico|public/).*)",
+    "/((?!api/auth|_next/static|_next/image|favicon.ico|.*\\.png$|.*\\.jpg$|.*\\.jpeg$|.*\\.gif$|.*\\.svg$).*)",
   ],
 }
