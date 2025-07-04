@@ -6,43 +6,47 @@ export default withAuth(
     const token = req.nextauth.token
     const { pathname } = req.nextUrl
 
-    // Allow access to auth pages without token
+    // Allow access to auth pages
     if (pathname.startsWith("/auth/")) {
       return NextResponse.next()
     }
 
-    // If no token, redirect to sign in
+    // Redirect to signin if no token
     if (!token) {
-      const signInUrl = new URL("/auth/signin", req.url)
-      signInUrl.searchParams.set("callbackUrl", req.url)
-      return NextResponse.redirect(signInUrl)
+      return NextResponse.redirect(new URL("/auth/signin", req.url))
     }
 
-    // Check Super Admin context for admin routes
+    // Check for Super Admin context in admin routes
     if (pathname.startsWith("/admin")) {
-      // Allow if user is ADMIN or if Super Admin is acting as Team Leader
-      if (token.role === "ADMIN" || token.role === "SUPER_ADMIN") {
+      // Allow Super Admin to access admin routes (they can act as Team Leader)
+      if (token.role === "SUPER_ADMIN" || token.role === "ADMIN") {
         return NextResponse.next()
       }
-
-      // Redirect unauthorized users
       return NextResponse.redirect(new URL("/", req.url))
     }
 
-    // Check role-based access for other routes
-    if (pathname.startsWith("/super-admin") && token.role !== "SUPER_ADMIN") {
-      return NextResponse.redirect(new URL("/", req.url))
+    // Super Admin routes
+    if (pathname.startsWith("/super-admin")) {
+      if (token.role !== "SUPER_ADMIN") {
+        return NextResponse.redirect(new URL("/", req.url))
+      }
+      return NextResponse.next()
     }
 
-    if (pathname.startsWith("/mini-admin") && !["MINI_ADMIN", "ADMIN", "SUPER_ADMIN"].includes(token.role as string)) {
-      return NextResponse.redirect(new URL("/", req.url))
+    // Mini Admin routes
+    if (pathname.startsWith("/mini-admin")) {
+      if (token.role !== "MINI_ADMIN") {
+        return NextResponse.redirect(new URL("/", req.url))
+      }
+      return NextResponse.next()
     }
 
-    if (
-      pathname.startsWith("/inspector") &&
-      !["INSPECTOR", "MINI_ADMIN", "ADMIN", "SUPER_ADMIN"].includes(token.role as string)
-    ) {
-      return NextResponse.redirect(new URL("/", req.url))
+    // Inspector routes
+    if (pathname.startsWith("/inspector")) {
+      if (token.role !== "INSPECTOR") {
+        return NextResponse.redirect(new URL("/", req.url))
+      }
+      return NextResponse.next()
     }
 
     return NextResponse.next()
@@ -50,8 +54,10 @@ export default withAuth(
   {
     callbacks: {
       authorized: ({ token, req }) => {
+        const { pathname } = req.nextUrl
+
         // Allow access to auth pages without token
-        if (req.nextUrl.pathname.startsWith("/auth/")) {
+        if (pathname.startsWith("/auth/")) {
           return true
         }
 
@@ -64,6 +70,14 @@ export default withAuth(
 
 export const config = {
   matcher: [
-    "/((?!api/auth|_next/static|_next/image|favicon.ico|public|.*\\.png|.*\\.jpg|.*\\.jpeg|.*\\.gif|.*\\.svg).*)",
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api/auth (NextAuth API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public folder files
+     */
+    "/((?!api/auth|_next/static|_next/image|favicon.ico|.*\\.png$|.*\\.jpg$|.*\\.jpeg$|.*\\.gif$|.*\\.svg$).*)",
   ],
 }
