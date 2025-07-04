@@ -37,3 +37,18 @@ export function generatePDFFilename(departmentName: string, templateName: string
   const sanitizedTemplate = templateName.toLowerCase().replace(/\s+/g, "_")
   return `${sanitizedDept}_${sanitizedTemplate}_${formattedDate}.pdf`
 }
+
+export function getDashboardPath(role?: string): string {
+  switch (role) {
+    case "SUPER_ADMIN":
+      return "/super-admin"
+    case "ADMIN":
+      return "/admin"
+    case "MINI_ADMIN":
+      return "/mini-admin"
+    case "INSPECTOR":
+      return "/inspector"
+    default:
+      return "/inspector"
+  }
+}
