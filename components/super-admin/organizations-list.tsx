@@ -316,7 +316,7 @@ export function OrganizationsList({ onUpdate }: OrganizationsListProps) {
       <EditAdminDialog
         open={editAdminDialogOpen}
         onOpenChange={setEditAdminDialogOpen}
-        organization={selectedOrganization}
+        organizationId={selectedOrganization?.id}
         onSuccess={() => {
           fetchOrganizations()
           onUpdate()
