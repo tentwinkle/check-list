@@ -1,24 +1,15 @@
-import { getServerSession } from "next-auth/next"
 import { redirect } from "next/navigation"
+import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { AdminDashboard } from "@/components/admin/dashboard"
-import { SuperAdminBanner } from "@/components/admin/super-admin-banner"
+import type { Session } from "next-auth"
 
 export default async function AdminPage() {
-  const session = await getServerSession(authOptions)
+  const session: Session | null = await getServerSession(authOptions)
 
-  if (!session) {
+  if (!session || session.user?.role !== "ADMIN") {
     redirect("/auth/signin")
   }
 
-  if (session.user.role !== "ADMIN" && session.user.role !== "SUPER_ADMIN") {
-    redirect("/")
-  }
-
-  return (
-    <div className="container mx-auto py-6">
-      <SuperAdminBanner />
-      <AdminDashboard />
-    </div>
-  )
+  return <AdminDashboard />
 }

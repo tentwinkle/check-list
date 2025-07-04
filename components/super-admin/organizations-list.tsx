@@ -4,14 +4,8 @@ import { useState, useEffect } from "react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { MoreHorizontal, Edit, Trash2, UserCog, Shield } from "lucide-react"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+import { MoreHorizontal, Edit, Trash2, UserCog } from "lucide-react"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,7 +20,6 @@ import { EditOrganizationDialog } from "./edit-organization-dialog"
 import { EditAdminDialog } from "./edit-admin-dialog"
 import { useToast } from "@/hooks/use-toast"
 import { formatDate } from "@/lib/utils"
-import { useRouter } from "next/navigation"
 
 interface Organization {
   id: string
@@ -54,7 +47,6 @@ export function OrganizationsList({ onUpdate }: OrganizationsListProps) {
   const [editingAdminOrgId, setEditingAdminOrgId] = useState<string | null>(null)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const { toast } = useToast()
-  const router = useRouter()
 
   useEffect(() => {
     fetchOrganizations()
@@ -66,45 +58,12 @@ export function OrganizationsList({ onUpdate }: OrganizationsListProps) {
       if (response.ok) {
         const data = await response.json()
         setOrganizations(data)
-      } else {
-        toast({
-          title: "Error",
-          description: "Failed to fetch organizations",
-          variant: "destructive",
-        })
       }
     } catch (error) {
       console.error("Failed to fetch organizations:", error)
-      toast({
-        title: "Error",
-        description: "Failed to fetch organizations",
-        variant: "destructive",
-      })
     } finally {
       setLoading(false)
     }
-  }
-
-  const handleLoginAsTeamLeader = (organization: Organization) => {
-    // Store the SuperAdmin context in sessionStorage
-    sessionStorage.setItem(
-      "superAdminContext",
-      JSON.stringify({
-        originalRole: "SUPER_ADMIN",
-        actingAsRole: "ADMIN",
-        targetOrganizationId: organization.id,
-        targetOrganizationName: organization.name,
-        returnUrl: "/super-admin",
-      }),
-    )
-
-    // Navigate to admin dashboard
-    router.push("/admin")
-
-    toast({
-      title: "Context Switched",
-      description: `Now acting as Team Leader for ${organization.name}`,
-    })
   }
 
   const handleEdit = (organization: Organization) => {
@@ -173,7 +132,8 @@ export function OrganizationsList({ onUpdate }: OrganizationsListProps) {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Organization</TableHead>
+            <TableHead>Name</TableHead>
+            <TableHead>Description</TableHead>
             <TableHead>Users</TableHead>
             <TableHead>Areas</TableHead>
             <TableHead>Departments</TableHead>
@@ -184,12 +144,8 @@ export function OrganizationsList({ onUpdate }: OrganizationsListProps) {
         <TableBody>
           {organizations.map((org) => (
             <TableRow key={org.id}>
-              <TableCell>
-                <div>
-                  <div className="font-medium">{org.name}</div>
-                  {org.description && <div className="text-sm text-muted-foreground">{org.description}</div>}
-                </div>
-              </TableCell>
+              <TableCell className="font-medium">{org.name}</TableCell>
+              <TableCell>{org.description || "-"}</TableCell>
               <TableCell>
                 <Badge variant="secondary">{org._count.users}</Badge>
               </TableCell>
@@ -208,21 +164,18 @@ export function OrganizationsList({ onUpdate }: OrganizationsListProps) {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => handleLoginAsTeamLeader(org)}>
-                      <Shield className="mr-2 h-4 w-4" />
-                      Login as Team Leader
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => handleEdit(org)}>
+                  <DropdownMenuItem onClick={() => handleEdit(org)}>
                       <Edit className="mr-2 h-4 w-4" />
-                      Edit Organization
+                      Edit
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleEditAdmin(org)}>
                       <UserCog className="mr-2 h-4 w-4" />
                       Edit Admin
                     </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(org)}>
+                    <DropdownMenuItem
+                      className="text-red-600"
+                      onClick={() => handleDelete(org)}
+                    >
                       <Trash2 className="mr-2 h-4 w-4" />
                       Delete
                     </DropdownMenuItem>
@@ -262,8 +215,7 @@ export function OrganizationsList({ onUpdate }: OrganizationsListProps) {
               Are you sure you want to delete "{deletingOrganization?.name}"? This action cannot be undone.
               {deletingOrganization && (
                 <span className="block mt-2 text-red-600 font-medium">
-                  This organization has {deletingOrganization._count?.users} users, {deletingOrganization._count?.areas}{" "}
-                  areas, and {deletingOrganization._count?.departments} departments.
+                  This organization has {deletingOrganization._count?.users} users.
                 </span>
               )}
             </AlertDialogDescription>
