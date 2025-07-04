@@ -2,7 +2,7 @@
 
 import { useSession, signOut } from "next-auth/react"
 import Link from "next/link"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -12,12 +12,44 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { User, LogOut, Settings, Menu, X } from "lucide-react"
+import { User, LogOut, Settings, Menu, X, Crown, ArrowLeft, Building } from "lucide-react"
 import Image from "next/image"
+
+interface SuperAdminContext {
+  originalRole: string
+  targetOrganization: {
+    id: string
+    name: string
+  }
+  loginAsAdmin: boolean
+  timestamp: number
+}
 
 export function Navigation() {
   const { data: session } = useSession()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [superAdminContext, setSuperAdminContext] = useState<SuperAdminContext | null>(null)
+
+  useEffect(() => {
+    // Check if Super Admin is acting as Team Leader
+    const contextData = sessionStorage.getItem("superAdminContext")
+    if (contextData) {
+      try {
+        const context = JSON.parse(contextData) as SuperAdminContext
+        if (context.originalRole === "SUPER_ADMIN" && context.loginAsAdmin) {
+          setSuperAdminContext(context)
+        }
+      } catch (error) {
+        console.error("Failed to parse super admin context:", error)
+        sessionStorage.removeItem("superAdminContext")
+      }
+    }
+  }, [])
+
+  const handleReturnToSuperAdmin = () => {
+    sessionStorage.removeItem("superAdminContext")
+    window.location.href = "/super-admin"
+  }
 
   if (!session) return null
 
@@ -77,12 +109,37 @@ export function Navigation() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-4">
+            {/* Super Admin Context Indicator */}
+            {superAdminContext && (
+              <>
+                <div className="flex items-center space-x-2 px-3 py-1.5 rounded-full text-xs font-semibold shadow-md bg-gradient-to-r from-purple-100 to-purple-200 text-purple-800 border border-purple-300">
+                  <Crown className="h-3 w-3" />
+                  <span>Super Admin</span>
+                </div>
+                <div className="flex items-center space-x-2 px-3 py-1.5 rounded-full text-xs font-semibold shadow-md bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 border border-blue-300">
+                  <Building className="h-3 w-3" />
+                  <span className="max-w-32 truncate">{superAdminContext.targetOrganization.name}</span>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleReturnToSuperAdmin}
+                  className="glass hover:shadow-lg transition-all duration-300 bg-transparent border-purple-200 text-purple-700 hover:bg-purple-50"
+                >
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Return
+                </Button>
+              </>
+            )}
+
             {/* Role Badge */}
-            <div
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold shadow-md ${getRoleColor(session.user.role)}`}
-            >
-              {getRoleDisplay(session.user.role)}
-            </div>
+            {!superAdminContext && (
+              <div
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold shadow-md ${getRoleColor(session.user.role)}`}
+              >
+                {getRoleDisplay(session.user.role)}
+              </div>
+            )}
 
             {/* User Menu */}
             <DropdownMenu>
@@ -93,7 +150,7 @@ export function Navigation() {
                 >
                   <Avatar className="h-10 w-10 ring-2 ring-white/20">
                     {session.user.profileImage ? (
-                      <AvatarImage src={session.user.profileImage} alt="Avatar" />
+                      <AvatarImage src={session.user.profileImage || "/placeholder.svg"} alt="Avatar" />
                     ) : (
                       <AvatarFallback className="bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold">
                         {getInitials(session.user.name || session.user.email)}
@@ -106,7 +163,7 @@ export function Navigation() {
                 <div className="flex items-center justify-start gap-3">
                   <Avatar className="h-12 w-12 ring-2 ring-white/20">
                     {session.user.profileImage ? (
-                      <AvatarImage src={session.user.profileImage} alt="Avatar" />
+                      <AvatarImage src={session.user.profileImage || "/placeholder.svg"} alt="Avatar" />
                     ) : (
                       <AvatarFallback className="bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold">
                         {getInitials(session.user.name || session.user.email)}
@@ -116,6 +173,11 @@ export function Navigation() {
                   <div className="flex flex-col space-y-1 leading-none">
                     <p className="font-semibold text-gray-900 dark:text-gray-100">{session.user.name}</p>
                     <p className="text-sm text-muted-foreground truncate max-w-[180px]">{session.user.email}</p>
+                    {superAdminContext && (
+                      <p className="text-xs text-purple-600 font-medium">
+                        Managing: {superAdminContext.targetOrganization.name}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <DropdownMenuSeparator className="bg-white/20" />
@@ -167,23 +229,55 @@ export function Navigation() {
               <div className="flex items-center space-x-3 p-3 rounded-lg bg-white/10">
                 <Avatar className="h-10 w-10 ring-2 ring-white/20">
                   {session.user.profileImage ? (
-                      <AvatarImage src={session.user.profileImage} alt="Avatar" />
-                    ) : (
-                      <AvatarFallback className="bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold">
-                        {getInitials(session.user.name || session.user.email)}
-                      </AvatarFallback>
-                    )}
+                    <AvatarImage src={session.user.profileImage || "/placeholder.svg"} alt="Avatar" />
+                  ) : (
+                    <AvatarFallback className="bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold">
+                      {getInitials(session.user.name || session.user.email)}
+                    </AvatarFallback>
+                  )}
                 </Avatar>
                 <div>
                   <p className="font-semibold text-gray-900 dark:text-gray-100">{session.user.name}</p>
                   <p className="text-sm text-muted-foreground">{session.user.email}</p>
-                  <div
-                    className={`inline-block px-2 py-1 rounded-full text-xs font-semibold mt-1 ${getRoleColor(session.user.role)}`}
-                  >
-                    {getRoleDisplay(session.user.role)}
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {superAdminContext ? (
+                      <>
+                        <div className="inline-block px-2 py-1 rounded-full text-xs font-semibold bg-gradient-to-r from-purple-600 to-purple-700 text-white">
+                          <Crown className="inline w-3 h-3 mr-1" />
+                          Super Admin
+                        </div>
+                        <div className="inline-block px-2 py-1 rounded-full text-xs font-semibold bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+                          <Building className="inline w-3 h-3 mr-1" />
+                          {superAdminContext.targetOrganization.name}
+                        </div>
+                      </>
+                    ) : (
+                      <div
+                        className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${getRoleColor(session.user.role)}`}
+                      >
+                        {getRoleDisplay(session.user.role)}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
+
+              {superAdminContext && (
+                <div className="px-3 py-2 rounded-lg bg-purple-50 border border-purple-200">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setMobileMenuOpen(false)
+                      handleReturnToSuperAdmin()
+                    }}
+                    className="w-full text-purple-700 hover:bg-purple-100 justify-start"
+                  >
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Return to Super Admin
+                  </Button>
+                </div>
+              )}
 
               <Link
                 href="/profile"
