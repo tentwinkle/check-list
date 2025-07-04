@@ -425,6 +425,13 @@ function InspectionItemForm({ item, onSave, saving, disabled }: InspectionItemFo
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(item.result?.imageUrl ?? null)
 
+  useEffect(() => {
+    setApproved(item.result?.approved ?? true)
+    setComments(item.result?.comments ?? "")
+    setImagePreview(item.result?.imageUrl ?? null)
+    setImageFile(null)
+  }, [item])
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
