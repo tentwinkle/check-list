@@ -7,5 +7,3 @@ export function extractOrganizationId(session: any, request: Request) {
     ? new URL(request.url).searchParams.get("organizationId")
     : session.user.organizationId;
 }
-
-
