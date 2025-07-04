@@ -14,6 +14,7 @@ import { TemplatesManagement } from "./templates-management"
 import { InspectionsOverview } from "./inspections-overview"
 import { buildAdminApiUrl } from "@/lib/admin"
 import { CreateInspectionDialog } from "./create-inspection-dialog"
+import { QRScanner } from "@/components/inspector/qr-scanner"
 import {
   Building2,
   Users,
@@ -25,6 +26,8 @@ import {
   CheckCircle,
   AlertTriangle,
   TrendingUp,
+  QrCode,
+  Zap,
 } from "lucide-react"
 
 interface DashboardStats {
@@ -59,6 +62,7 @@ export function AdminDashboard({
     overdueInspections: 0,
   })
   const [createInspectionOpen, setCreateInspectionOpen] = useState(false)
+  const [showQRScanner, setShowQRScanner] = useState(false)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -203,6 +207,28 @@ export function AdminDashboard({
           </Card>
         </div>
 
+        {/* Quick Actions */}
+        <div className="mb-8 animate-slide-up">
+          <Card variant="glass" className="overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+              <CardTitle className="flex items-center gap-2">
+                <Zap className="h-5 w-5" />
+                Quick Actions
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <Button
+                onClick={() => setShowQRScanner(true)}
+                className="h-14 text-base font-semibold flex items-center"
+                size="lg"
+              >
+                <QrCode className="mr-3 h-5 w-5" />
+                <span>Scan QR Code</span>
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Inspection Analytics */}
         <div className="mb-8 animate-slide-up" style={{ animationDelay: "0.2s" }}>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
@@ -339,6 +365,10 @@ export function AdminDashboard({
           onOpenChange={setCreateInspectionOpen}
           onSuccess={handleCreateInspectionSuccess}
           organizationId={organizationId}
+        />
+        <QRScanner
+          open={showQRScanner}
+          onClose={() => setShowQRScanner(false)}
         />
       </div>
     </div>

@@ -11,6 +11,7 @@ import { MiniAdminUsersManagement } from "./users-management"
 import { MiniAdminTemplatesManagement } from "./templates-management"
 import { MiniAdminInspectionsOverview } from "./inspections-overview"
 import { CreateInspectionDialog } from "./create-inspection-dialog"
+import { QRScanner } from "@/components/inspector/qr-scanner"
 import {
   Building2,
   Users,
@@ -23,6 +24,8 @@ import {
   AlertTriangle,
   MapPin,
   TrendingUp,
+  QrCode,
+  Zap,
 } from "lucide-react"
 
 interface DashboardStats {
@@ -53,6 +56,7 @@ export function MiniAdminDashboard() {
     areaName: "",
   })
   const [createInspectionOpen, setCreateInspectionOpen] = useState(false)
+  const [showQRScanner, setShowQRScanner] = useState(false)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -175,6 +179,28 @@ export function MiniAdminDashboard() {
                 {stats.activeInspections}
               </div>
               <p className="text-xs text-gray-600 mt-1">In progress</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="mb-8 animate-slide-up">
+          <Card variant="glass" className="overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white">
+              <CardTitle className="flex items-center gap-2">
+                <Zap className="h-5 w-5" />
+                Quick Actions
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <Button
+                onClick={() => setShowQRScanner(true)}
+                className="h-14 text-base font-semibold flex items-center"
+                size="lg"
+              >
+                <QrCode className="mr-3 h-5 w-5" />
+                <span>Scan QR Code</span>
+              </Button>
             </CardContent>
           </Card>
         </div>
@@ -304,6 +330,10 @@ export function MiniAdminDashboard() {
           open={createInspectionOpen}
           onOpenChange={setCreateInspectionOpen}
           onSuccess={handleCreateInspectionSuccess}
+        />
+        <QRScanner
+          open={showQRScanner}
+          onClose={() => setShowQRScanner(false)}
         />
       </div>
     </div>
