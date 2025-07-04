@@ -35,7 +35,6 @@ export function InspectionsOverview({ onUpdate }: InspectionsOverviewProps) {
   const [inspections, setInspections] = useState<InspectionInstance[]>([])
   const [loading, setLoading] = useState(true)
   const [downloadingPdf, setDownloadingPdf] = useState<string | null>(null)
-  const [deletingId, setDeletingId] = useState<string | null>(null)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -98,34 +97,6 @@ export function InspectionsOverview({ onUpdate }: InspectionsOverviewProps) {
       })
     } finally {
       setDownloadingPdf(null)
-    }
-  }
-
-  const deleteInspection = async (inspectionId: string) => {
-    setDeletingId(inspectionId)
-    try {
-      const res = await fetch(`/api/admin/inspections/${inspectionId}`, {
-        method: "DELETE",
-      })
-      if (res.ok) {
-        fetchInspections()
-        toast({ title: "Success", description: "Inspection deleted" })
-      } else {
-        const err = await res.json()
-        toast({
-          title: "Error",
-          description: err.error || "Failed to delete inspection",
-          variant: "destructive",
-        })
-      }
-    } catch {
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred",
-        variant: "destructive",
-      })
-    } finally {
-      setDeletingId(null)
     }
   }
 
@@ -211,16 +182,6 @@ export function InspectionsOverview({ onUpdate }: InspectionsOverviewProps) {
                               PDF
                             </>
                           )}
-                        </Button>
-                      )}
-                      {inspection.status === "PENDING" && (
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => deleteInspection(inspection.id)}
-                          disabled={deletingId === inspection.id}
-                        >
-                          {deletingId === inspection.id ? "Deleting..." : "Delete"}
                         </Button>
                       )}
                     </TableCell>

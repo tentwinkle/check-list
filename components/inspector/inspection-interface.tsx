@@ -425,16 +425,6 @@ function InspectionItemForm({ item, onSave, saving, disabled }: InspectionItemFo
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(item.result?.imageUrl ?? null)
 
-  // Reset form state when switching to a different checklist item or when the
-  // item result changes. This ensures that the preview and other fields reflect
-  // the saved data when viewing a submitted report.
-  useEffect(() => {
-    setApproved(item.result?.approved ?? true)
-    setComments(item.result?.comments ?? "")
-    setImageFile(null)
-    setImagePreview(item.result?.imageUrl ?? null)
-  }, [item.id, item.result?.approved, item.result?.comments, item.result?.imageUrl])
-
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
