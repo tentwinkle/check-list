@@ -4,8 +4,14 @@ import { useState, useEffect } from "react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { MoreHorizontal, Edit, Trash2, UserCog } from "lucide-react"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { MoreHorizontal, Edit, Trash2, UserCog, LogIn } from "lucide-react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,6 +32,11 @@ interface Organization {
   name: string
   description?: string
   createdAt: string
+  admin?: {
+    id: string
+    name: string
+    email: string
+  }
   _count: {
     users: number
     areas: number
@@ -81,6 +92,29 @@ export function OrganizationsList({ onUpdate }: OrganizationsListProps) {
     setShowDeleteDialog(true)
   }
 
+  const handleLoginAsTeamLeader = (organization: Organization) => {
+    // Store the Super Admin context with specific organization
+    const superAdminContext = {
+      originalRole: "SUPER_ADMIN",
+      targetOrganization: {
+        id: organization.id,
+        name: organization.name,
+      },
+      loginAsAdmin: true,
+      timestamp: Date.now(),
+    }
+
+    sessionStorage.setItem("superAdminContext", JSON.stringify(superAdminContext))
+
+    toast({
+      title: "Switching to Team Leader View",
+      description: `Accessing ${organization.name} as Team Leader`,
+    })
+
+    // Redirect to admin dashboard
+    window.location.href = "/admin"
+  }
+
   const confirmDelete = async () => {
     if (!deletingOrganization) return
 
@@ -132,20 +166,34 @@ export function OrganizationsList({ onUpdate }: OrganizationsListProps) {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>Description</TableHead>
+            <TableHead>Organization</TableHead>
+            <TableHead>Admin</TableHead>
             <TableHead>Users</TableHead>
             <TableHead>Areas</TableHead>
             <TableHead>Departments</TableHead>
             <TableHead>Created</TableHead>
-            <TableHead className="w-[70px]"></TableHead>
+            <TableHead className="w-[70px]">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {organizations.map((org) => (
             <TableRow key={org.id}>
-              <TableCell className="font-medium">{org.name}</TableCell>
-              <TableCell>{org.description || "-"}</TableCell>
+              <TableCell>
+                <div>
+                  <div className="font-medium">{org.name}</div>
+                  {org.description && <div className="text-sm text-gray-500 mt-1">{org.description}</div>}
+                </div>
+              </TableCell>
+              <TableCell>
+                {org.admin ? (
+                  <div>
+                    <div className="font-medium">{org.admin.name}</div>
+                    <div className="text-sm text-gray-500">{org.admin.email}</div>
+                  </div>
+                ) : (
+                  <Badge variant="secondary">No Admin Assigned</Badge>
+                )}
+              </TableCell>
               <TableCell>
                 <Badge variant="secondary">{org._count.users}</Badge>
               </TableCell>
@@ -164,20 +212,29 @@ export function OrganizationsList({ onUpdate }: OrganizationsListProps) {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => handleEdit(org)}>
-                      <Edit className="mr-2 h-4 w-4" />
-                      Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleEditAdmin(org)}>
-                      <UserCog className="mr-2 h-4 w-4" />
-                      Edit Admin
-                    </DropdownMenuItem>
                     <DropdownMenuItem
-                      className="text-red-600"
+                      onClick={() => handleLoginAsTeamLeader(org)}
+                      className="cursor-pointer text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                    >
+                      <LogIn className="mr-2 h-4 w-4" />
+                      Login as Team Leader
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => handleEdit(org)} className="cursor-pointer">
+                      <Edit className="mr-2 h-4 w-4" />
+                      Edit Organization
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleEditAdmin(org)} className="cursor-pointer">
+                      <UserCog className="mr-2 h-4 w-4" />
+                      {org.admin ? "Edit Admin" : "Assign Admin"}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      className="text-red-600 cursor-pointer hover:text-red-700 hover:bg-red-50"
                       onClick={() => handleDelete(org)}
                     >
                       <Trash2 className="mr-2 h-4 w-4" />
-                      Delete
+                      Delete Organization
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -212,11 +269,15 @@ export function OrganizationsList({ onUpdate }: OrganizationsListProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Organization</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{deletingOrganization?.name}"? This action cannot be undone.
+              Are you sure you want to delete "{deletingOrganization?.name}"? This action cannot be undone and will
+              permanently remove all associated data including:
               {deletingOrganization && (
-                <span className="block mt-2 text-red-600 font-medium">
-                  This organization has {deletingOrganization._count?.users} users.
-                </span>
+                <div className="mt-3 space-y-1 text-sm">
+                  <div>• {deletingOrganization._count.users} users</div>
+                  <div>• {deletingOrganization._count.areas} areas</div>
+                  <div>• {deletingOrganization._count.departments} departments</div>
+                  <div>• All templates and inspections</div>
+                </div>
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -227,7 +288,7 @@ export function OrganizationsList({ onUpdate }: OrganizationsListProps) {
               disabled={!deletingOrganization}
               className="bg-red-600 hover:bg-red-700"
             >
-              Delete
+              Delete Organization
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
