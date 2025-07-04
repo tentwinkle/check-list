@@ -3,22 +3,25 @@ import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import type { Session } from "next-auth"
 import { prisma } from "@/lib/prisma"
+import { extractOrganizationId } from "@/lib/admin"
 import { generateInspectionPDF, generatePDFFilename } from "@/lib/pdf-generator"
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const session: Session | null = await getServerSession(authOptions)
 
-    if (!session || session.user.role !== "ADMIN") {
+    if (!session || !["ADMIN", "SUPER_ADMIN"].includes(session.user.role)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     // Get the inspection with all related data
+    const organizationId = extractOrganizationId(session, request)
+
     const inspection = await prisma.inspectionInstance.findUnique({
       where: {
         id: params.id,
         department: {
-          organizationId: session.user.organizationId,
+          organizationId,
         },
       },
       include: {

@@ -18,6 +18,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { EditDepartmentDialog } from "./edit-department-dialog"
+import { buildAdminApiUrl } from "@/lib/admin"
 import { useToast } from "@/hooks/use-toast"
 
 interface Department {
@@ -37,9 +38,10 @@ interface Department {
 
 interface DepartmentsListProps {
   onUpdate: () => void
+  organizationId?: string
 }
 
-export function DepartmentsList({ onUpdate }: DepartmentsListProps) {
+export function DepartmentsList({ onUpdate, organizationId }: DepartmentsListProps) {
   const [departments, setDepartments] = useState<Department[]>([])
   const [loading, setLoading] = useState(true)
   const [editingDepartment, setEditingDepartment] = useState<Department | null>(null)
@@ -54,7 +56,9 @@ export function DepartmentsList({ onUpdate }: DepartmentsListProps) {
 
   const fetchDepartments = async () => {
     try {
-      const response = await fetch("/api/admin/departments")
+      const response = await fetch(
+        buildAdminApiUrl("/api/admin/departments", organizationId),
+      )
       if (response.ok) {
         const data = await response.json()
         setDepartments(data)
@@ -80,9 +84,15 @@ export function DepartmentsList({ onUpdate }: DepartmentsListProps) {
     if (!deletingDepartment) return
 
     try {
-      const response = await fetch(`/api/admin/departments/${deletingDepartment.id}`, {
-        method: "DELETE",
-      })
+      const response = await fetch(
+        buildAdminApiUrl(
+          `/api/admin/departments/${deletingDepartment.id}`,
+          organizationId,
+        ),
+        {
+          method: "DELETE",
+        },
+      )
 
       if (response.ok) {
         toast({
@@ -192,6 +202,7 @@ export function DepartmentsList({ onUpdate }: DepartmentsListProps) {
           fetchDepartments()
         }}
         department={editingDepartment}
+        organizationId={organizationId}
       />
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>

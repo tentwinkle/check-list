@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { buildAdminApiUrl } from "@/lib/admin";
 
 interface User {
   id: string;
@@ -54,6 +55,7 @@ interface EditUserDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
+  organizationId?: string;
 }
 
 export function EditUserDialog({
@@ -61,6 +63,7 @@ export function EditUserDialog({
   open,
   onOpenChange,
   onSuccess,
+  organizationId,
 }: EditUserDialogProps) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -88,7 +91,9 @@ export function EditUserDialog({
 
   const fetchAreas = async () => {
     try {
-      const response = await fetch("/api/admin/areas");
+      const response = await fetch(
+        buildAdminApiUrl("/api/admin/areas", organizationId),
+      );
       if (response.ok) {
         const data = await response.json();
         setAreas(data);
@@ -100,7 +105,9 @@ export function EditUserDialog({
 
   const fetchDepartments = async () => {
     try {
-      const response = await fetch("/api/admin/departments");
+      const response = await fetch(
+        buildAdminApiUrl("/api/admin/departments", organizationId),
+      );
       if (response.ok) {
         const data = await response.json();
         setDepartments(data);
@@ -116,12 +123,14 @@ export function EditUserDialog({
 
     setLoading(true);
     try {
-      const response = await fetch(`/api/admin/users/${user.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+      const response = await fetch(
+        buildAdminApiUrl(`/api/admin/users/${user.id}`, organizationId),
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
           name: name.trim() || null,
           email: email.trim(),
           role,
@@ -129,7 +138,8 @@ export function EditUserDialog({
           departmentId: departmentId === "NONE" ? null : departmentId,
           password: password || undefined,
         }),
-      });
+        },
+      );
 
       if (response.ok) {
         toast({

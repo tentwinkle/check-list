@@ -18,12 +18,14 @@ interface TemplateItemsManagementProps {
   templateId: string;
   templateName: string;
   onUpdate: () => void;
+  organizationId?: string;
 }
 
 export function TemplateItemsManagement({
   templateId,
   templateName,
   onUpdate,
+  organizationId,
 }: TemplateItemsManagementProps) {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showQRDialog, setShowQRDialog] = useState(false);
@@ -73,6 +75,7 @@ export function TemplateItemsManagement({
             onUpdate();
           }}
           onShowQR={handleShowQR}
+          organizationId={organizationId}
         />
       </CardContent>
 
@@ -84,6 +87,7 @@ export function TemplateItemsManagement({
           onUpdate();
         }}
         templateId={templateId}
+        organizationId={organizationId}
       />
 
       <QRCodeDialog
@@ -91,6 +95,7 @@ export function TemplateItemsManagement({
         onOpenChange={setShowQRDialog}
         templateId={templateId}
         selectedItem={selectedItem}
+        organizationId={organizationId}
       />
     </Card>
   );

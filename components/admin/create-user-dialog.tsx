@@ -10,11 +10,13 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
 import { Loader2 } from "lucide-react"
+import { buildAdminApiUrl } from "@/lib/admin"
 
 interface CreateUserDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSuccess: () => void
+  organizationId?: string
 }
 
 interface Area {
@@ -28,7 +30,7 @@ interface Department {
   areaId?: string
 }
 
-export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDialogProps) {
+export function CreateUserDialog({ open, onOpenChange, onSuccess, organizationId }: CreateUserDialogProps) {
   const [loading, setLoading] = useState(false)
   const [areas, setAreas] = useState<Area[]>([])
   const [departments, setDepartments] = useState<Department[]>([])
@@ -62,7 +64,9 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDi
 
   const fetchAreas = async () => {
     try {
-      const response = await fetch("/api/admin/areas")
+      const response = await fetch(
+        buildAdminApiUrl("/api/admin/areas", organizationId),
+      )
       if (response.ok) {
         const data = await response.json()
         setAreas(data)
@@ -74,7 +78,9 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDi
 
   const fetchDepartments = async () => {
     try {
-      const response = await fetch("/api/admin/departments")
+      const response = await fetch(
+        buildAdminApiUrl("/api/admin/departments", organizationId),
+      )
       if (response.ok) {
         const data = await response.json()
         setDepartments(data)
@@ -89,12 +95,14 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDi
     setLoading(true)
 
     try {
-      const response = await fetch("/api/admin/users", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+      const response = await fetch(
+        buildAdminApiUrl("/api/admin/users", organizationId),
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
           ...formData,
           areaId: formData.areaId === "" || formData.areaId === "none" ? "NONE" : formData.areaId,
           departmentId:
@@ -103,7 +111,8 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDi
               : formData.departmentId,
           password: formData.password || undefined,
         }),
-      })
+        },
+      )
 
       if (response.ok) {
         toast({

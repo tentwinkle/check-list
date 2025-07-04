@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { getInspectionStatus, formatDate } from "@/lib/utils"
 import { Download, Play } from "lucide-react"
+import { buildAdminApiUrl } from "@/lib/admin"
 import Link from "next/link"
 import { useToast } from "@/hooks/use-toast"
 
@@ -29,9 +30,10 @@ interface InspectionInstance {
 
 interface InspectionsOverviewProps {
   onUpdate: () => void
+  organizationId?: string
 }
 
-export function InspectionsOverview({ onUpdate }: InspectionsOverviewProps) {
+export function InspectionsOverview({ onUpdate, organizationId }: InspectionsOverviewProps) {
   const [inspections, setInspections] = useState<InspectionInstance[]>([])
   const [loading, setLoading] = useState(true)
   const [downloadingPdf, setDownloadingPdf] = useState<string | null>(null)
@@ -48,7 +50,9 @@ export function InspectionsOverview({ onUpdate }: InspectionsOverviewProps) {
 
   const fetchInspections = async () => {
     try {
-      const response = await fetch("/api/admin/inspections")
+      const response = await fetch(
+        buildAdminApiUrl("/api/admin/inspections", organizationId),
+      )
       if (response.ok) {
         const data = await response.json()
         setInspections(data)
@@ -64,7 +68,12 @@ export function InspectionsOverview({ onUpdate }: InspectionsOverviewProps) {
     setDownloadingPdf(inspectionId)
 
     try {
-      const response = await fetch(`/api/admin/inspections/${inspectionId}/generate-pdf`)
+      const response = await fetch(
+        buildAdminApiUrl(
+          `/api/admin/inspections/${inspectionId}/generate-pdf`,
+          organizationId,
+        ),
+      )
 
       if (response.ok) {
         const blob = await response.blob()
@@ -104,9 +113,12 @@ export function InspectionsOverview({ onUpdate }: InspectionsOverviewProps) {
   const deleteInspection = async (inspectionId: string) => {
     setDeletingId(inspectionId)
     try {
-      const res = await fetch(`/api/admin/inspections/${inspectionId}`, {
-        method: "DELETE",
-      })
+      const res = await fetch(
+        buildAdminApiUrl(`/api/admin/inspections/${inspectionId}`, organizationId),
+        {
+          method: "DELETE",
+        },
+      )
       if (res.ok) {
         fetchInspections()
         onUpdate()

@@ -4,12 +4,26 @@ import { authOptions } from "@/lib/auth"
 import { AdminDashboard } from "@/components/admin/dashboard"
 import type { Session } from "next-auth"
 
-export default async function AdminPage() {
+export default async function AdminPage({
+  searchParams,
+}: {
+  searchParams?: { organizationId?: string }
+}) {
   const session: Session | null = await getServerSession(authOptions)
 
-  if (!session || session.user?.role !== "ADMIN") {
+  const isAdmin = session && session.user.role === "ADMIN"
+  const isSuperAdmin = session && session.user.role === "SUPER_ADMIN"
+  const organizationId = isSuperAdmin
+    ? searchParams?.organizationId
+    : session?.user.organizationId
+
+  if (!session || (!isAdmin && !isSuperAdmin)) {
     redirect("/auth/signin")
   }
 
-  return <AdminDashboard />
+  if (isSuperAdmin && !organizationId) {
+    redirect("/super-admin")
+  }
+
+  return <AdminDashboard organizationId={organizationId} />
 }

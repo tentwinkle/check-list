@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import { Loader2 } from "lucide-react"
+import { buildAdminApiUrl } from "@/lib/admin"
 
 interface EditAreaDialogProps {
   open: boolean
@@ -20,9 +21,10 @@ interface EditAreaDialogProps {
     name: string
     description?: string
   } | null
+  organizationId?: string
 }
 
-export function EditAreaDialog({ open, onOpenChange, onSuccess, area }: EditAreaDialogProps) {
+export function EditAreaDialog({ open, onOpenChange, onSuccess, area, organizationId }: EditAreaDialogProps) {
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     name: "",
@@ -46,13 +48,16 @@ export function EditAreaDialog({ open, onOpenChange, onSuccess, area }: EditArea
     setLoading(true)
 
     try {
-      const response = await fetch(`/api/admin/areas/${area.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
+      const response = await fetch(
+        buildAdminApiUrl(`/api/admin/areas/${area.id}`, organizationId),
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formData),
         },
-        body: JSON.stringify(formData),
-      })
+      )
 
       if (response.ok) {
         toast({

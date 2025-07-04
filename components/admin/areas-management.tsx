@@ -9,9 +9,10 @@ import { AreasList } from "./areas-list"
 
 interface AreasManagementProps {
   onUpdate: () => void
+  organizationId?: string
 }
 
-export function AreasManagement({ onUpdate }: AreasManagementProps) {
+export function AreasManagement({ onUpdate, organizationId }: AreasManagementProps) {
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [listKey, setListKey] = useState(0)
 
@@ -30,7 +31,11 @@ export function AreasManagement({ onUpdate }: AreasManagementProps) {
         </div>
       </CardHeader>
       <CardContent>
-        <AreasList key={listKey} onUpdate={onUpdate} />
+        <AreasList
+          key={listKey}
+          onUpdate={onUpdate}
+          organizationId={organizationId}
+        />
       </CardContent>
 
       <CreateAreaDialog
@@ -40,6 +45,7 @@ export function AreasManagement({ onUpdate }: AreasManagementProps) {
           onUpdate()
           setListKey((k) => k + 1)
         }}
+        organizationId={organizationId}
       />
     </Card>
   )

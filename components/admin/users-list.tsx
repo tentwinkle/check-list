@@ -21,6 +21,7 @@ import { MoreHorizontal, Edit, Trash2 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { formatDate } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
+import { buildAdminApiUrl } from "@/lib/admin"
 
 interface User {
   id: string
@@ -38,9 +39,10 @@ interface User {
 
 interface UsersListProps {
   onUpdate: () => void
+  organizationId?: string
 }
 
-export function UsersList({ onUpdate }: UsersListProps) {
+export function UsersList({ onUpdate, organizationId }: UsersListProps) {
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [editingUser, setEditingUser] = useState<User | null>(null)
@@ -55,7 +57,9 @@ export function UsersList({ onUpdate }: UsersListProps) {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch("/api/admin/users")
+      const response = await fetch(
+        buildAdminApiUrl("/api/admin/users", organizationId),
+      )
       if (response.ok) {
         const data = await response.json()
         setUsers(data)
@@ -107,9 +111,12 @@ export function UsersList({ onUpdate }: UsersListProps) {
     if (!deletingUser) return
 
     try {
-      const response = await fetch(`/api/admin/users/${deletingUser.id}`, {
-        method: "DELETE",
-      })
+      const response = await fetch(
+        buildAdminApiUrl(`/api/admin/users/${deletingUser.id}`, organizationId),
+        {
+          method: "DELETE",
+        },
+      )
 
       if (response.ok) {
         toast({
@@ -202,6 +209,7 @@ export function UsersList({ onUpdate }: UsersListProps) {
             onUpdate()
             fetchUsers()
           }}
+          organizationId={organizationId}
         />
       )}
 
