@@ -187,13 +187,6 @@ export function AdminDashboard() {
               </TabsContent>
 
               <TabsContent value="users" className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-semibold">Users Management</h3>
-                  <Button onClick={() => setShowCreateUserDialog(true)}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add User
-                  </Button>
-                </div>
                 <UsersManagement
                   key={refreshKey}
                   onUpdate={handleRefresh}
@@ -202,13 +195,6 @@ export function AdminDashboard() {
               </TabsContent>
 
               <TabsContent value="departments" className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-semibold">Departments Management</h3>
-                  <Button onClick={() => setShowCreateDepartmentDialog(true)}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add Department
-                  </Button>
-                </div>
                 <DepartmentsManagement
                   key={refreshKey}
                   onUpdate={handleRefresh}
@@ -217,13 +203,6 @@ export function AdminDashboard() {
               </TabsContent>
 
               <TabsContent value="areas" className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-semibold">Areas Management</h3>
-                  <Button onClick={() => setShowCreateAreaDialog(true)}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add Area
-                  </Button>
-                </div>
                 <AreasManagement
                   key={refreshKey}
                   onUpdate={handleRefresh}
@@ -232,13 +211,6 @@ export function AdminDashboard() {
               </TabsContent>
 
               <TabsContent value="templates" className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-semibold">Templates Management</h3>
-                  <Button onClick={() => setShowCreateTemplateDialog(true)}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add Template
-                  </Button>
-                </div>
                 <TemplatesManagement
                   key={refreshKey}
                   onUpdate={handleRefresh}
