@@ -29,6 +29,7 @@ interface InspectionInstance {
   id: string;
   dueDate: string;
   status: string;
+  inspectorId: string;
   completedAt?: string;
   masterTemplate: {
     name: string;
@@ -285,16 +286,18 @@ export function InspectionsList() {
                             </Link>
                           </Button>
                         ) : (
-                          <Button variant="outline">
-                            <Link
-                              href={`/inspector/inspection/${inspection.id}`}
-                              className="flex items-center"
-                            >
-                              <span className="flex items-center">
-                                View Report
-                              </span>
-                            </Link>
-                          </Button>
+                          session?.user?.id === inspection.inspectorId && (
+                            <Button variant="outline">
+                              <Link
+                                href={`/inspector/inspection/${inspection.id}`}
+                                className="flex items-center"
+                              >
+                                <span className="flex items-center">
+                                  View Report
+                                </span>
+                              </Link>
+                            </Button>
+                          )
                         )}
                       </div>
                     </div>
