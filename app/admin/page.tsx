@@ -1,14 +1,13 @@
 "use client"
 
 import { useSession } from "next-auth/react"
-import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
 import { AdminDashboard } from "@/components/admin/dashboard"
-import { Navigation } from "@/components/ui/navigation"
-import { Card, CardContent } from "@/components/ui/card"
-import { Loader2, Crown, Building } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { ArrowLeft, Crown, Building } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 
 interface SuperAdminContext {
   originalRole: string
@@ -23,99 +22,117 @@ interface SuperAdminContext {
 export default function AdminPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
-  const [loading, setLoading] = useState(true)
+  const { toast } = useToast()
   const [superAdminContext, setSuperAdminContext] = useState<SuperAdminContext | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (status === "loading") return
-
-    if (status === "unauthenticated") {
-      router.push("/auth/signin")
-      return
-    }
-
-    // Check if user has admin access or is Super Admin
-    if (session?.user?.role !== "ADMIN" && session?.user?.role !== "SUPER_ADMIN") {
-      router.push("/")
-      return
-    }
 
     // Check for Super Admin context
     try {
       const contextData = sessionStorage.getItem("superAdminContext")
       if (contextData) {
         const context = JSON.parse(contextData) as SuperAdminContext
-        if (context.originalRole === "SUPER_ADMIN" && context.loginAsAdmin) {
-          setSuperAdminContext(context)
-        }
+        setSuperAdminContext(context)
       }
     } catch (error) {
-      console.error("Failed to parse Super Admin context:", error)
-      sessionStorage.removeItem("superAdminContext")
+      console.error("Error parsing Super Admin context:", error)
+    }
+
+    if (status === "unauthenticated") {
+      router.push("/auth/signin")
+      return
+    }
+
+    if (session?.user) {
+      // Check if user has admin access or is super admin with context
+      const hasAdminAccess =
+        session.user.role === "ADMIN" ||
+        session.user.role === "MINI_ADMIN" ||
+        (session.user.role === "SUPER_ADMIN" && superAdminContext)
+
+      if (!hasAdminAccess) {
+        router.push("/")
+        return
+      }
     }
 
     setLoading(false)
-  }, [session, status, router])
+  }, [session, status, router, superAdminContext])
 
   const handleReturnToSuperAdmin = () => {
-    sessionStorage.removeItem("superAdminContext")
-    router.push("/super-admin")
+    try {
+      // Clear the Super Admin context
+      sessionStorage.removeItem("superAdminContext")
+
+      toast({
+        title: "Returning to Super Admin",
+        description: "Switching back to Super Admin dashboard",
+      })
+
+      // Redirect to super admin dashboard
+      setTimeout(() => {
+        window.location.href = "/super-admin"
+      }, 500)
+    } catch (error) {
+      console.error("Error returning to Super Admin:", error)
+      toast({
+        title: "Error",
+        description: "Failed to return to Super Admin dashboard",
+        variant: "destructive",
+      })
+    }
   }
 
   if (loading || status === "loading") {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-600 mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Loading Dashboard</h3>
-            <p className="text-sm text-gray-600 text-center">Please wait while we prepare your admin dashboard...</p>
-          </CardContent>
-        </Card>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
       </div>
     )
   }
 
-  if (!session) {
+  if (!session?.user) {
     return null
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navigation />
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Super Admin Context Header */}
-        {superAdminContext && (
-          <div className="mb-6 p-4 bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div className="flex items-center space-x-3">
+      {/* Super Admin Context Header */}
+      {superAdminContext && (
+        <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between py-3">
+              <div className="flex items-center space-x-4">
+                <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
+                  <Crown className="w-4 h-4 mr-1" />
+                  Super Admin View
+                </Badge>
                 <div className="flex items-center space-x-2">
-                  <Crown className="h-5 w-5 text-purple-600" />
-                  <Badge variant="outline" className="bg-purple-100 text-purple-700 border-purple-300">
-                    Super Admin View
-                  </Badge>
-                </div>
-                <div className="flex items-center space-x-2 text-sm text-gray-600">
-                  <Building className="h-4 w-4" />
-                  <span>
-                    Managing: <strong>{superAdminContext.targetOrganization.name}</strong>
-                  </span>
+                  <Building className="w-4 h-4" />
+                  <span className="font-medium">Managing: {superAdminContext.targetOrganization.name}</span>
                 </div>
               </div>
               <Button
-                variant="outline"
                 onClick={handleReturnToSuperAdmin}
-                className="bg-white hover:bg-purple-50 border-purple-200 text-purple-700"
+                variant="secondary"
+                size="sm"
+                className="bg-white/20 hover:bg-white/30 text-white border-white/30"
               >
+                <ArrowLeft className="w-4 h-4 mr-2" />
                 Return to Super Admin
               </Button>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        <AdminDashboard organizationId={superAdminContext?.targetOrganization.id} />
-      </div>
+      {/* Admin Dashboard */}
+      <AdminDashboard
+        organizationId={superAdminContext?.targetOrganization.id || session.user.organizationId}
+        isSuperAdminView={!!superAdminContext}
+      />
     </div>
   )
 }
