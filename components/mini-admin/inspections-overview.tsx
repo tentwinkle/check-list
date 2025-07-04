@@ -170,7 +170,7 @@ export function MiniAdminInspectionsOverview({ onUpdate }: InspectionsOverviewPr
                       <StatusBadge status={status} />
                     </TableCell>
                     <TableCell>{inspection.completedAt ? formatDate(new Date(inspection.completedAt)) : "-"}</TableCell>
-                    <TableCell className="space-x-2">
+                    <TableCell className="flex items-center space-x-2">
                       {inspection.status !== "COMPLETED" && (
                         <Button size="sm">
                           <Link
