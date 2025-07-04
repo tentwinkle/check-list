@@ -13,7 +13,7 @@ interface InspectionPageProps {
 export default async function InspectionPage({ params }: InspectionPageProps) {
   const session: Session | null = await getServerSession(authOptions)
 
-  if (!session || !["INSPECTOR", "MINI_ADMIN", "ADMIN"].includes(session.user.role)) {
+  if (!session || !["INSPECTOR", "MINI_ADMIN", "ADMIN", "SUPER_ADMIN"].includes(session.user.role)) {
     redirect("/auth/signin")
   }
 
