@@ -1,35 +1,45 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { MoreHorizontal, Edit, Trash2, UserCog } from "lucide-react"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Card, CardContent } from "@/components/ui/card"
 import { EditOrganizationDialog } from "./edit-organization-dialog"
 import { EditAdminDialog } from "./edit-admin-dialog"
-import { useToast } from "@/hooks/use-toast"
-import { formatDate } from "@/lib/utils"
+import { MoreHorizontal, Edit, UserCog, Shield, Trash2 } from 'lucide-react'
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 
 interface Organization {
   id: string
   name: string
-  description?: string
+  description: string | null
   createdAt: string
+  admin: {
+    id: string
+    name: string
+    email: string
+  } | null
   _count: {
     users: number
     areas: number
     departments: number
+    templates: number
   }
 }
 
@@ -40,13 +50,9 @@ interface OrganizationsListProps {
 export function OrganizationsList({ onUpdate }: OrganizationsListProps) {
   const [organizations, setOrganizations] = useState<Organization[]>([])
   const [loading, setLoading] = useState(true)
-  const [editingOrganization, setEditingOrganization] = useState<Organization | null>(null)
-  const [deletingOrganization, setDeletingOrganization] = useState<Organization | null>(null)
-  const [showEditDialog, setShowEditDialog] = useState(false)
-  const [showEditAdminDialog, setShowEditAdminDialog] = useState(false)
-  const [editingAdminOrgId, setEditingAdminOrgId] = useState<string | null>(null)
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
-  const { toast } = useToast()
+  const [editingOrg, setEditingOrg] = useState<Organization | null>(null)
+  const [editingAdmin, setEditingAdmin] = useState<{ org: Organization; admin: any } | null>(null)
+  const router = useRouter()
 
   useEffect(() => {
     fetchOrganizations()
@@ -61,177 +67,206 @@ export function OrganizationsList({ onUpdate }: OrganizationsListProps) {
       }
     } catch (error) {
       console.error("Failed to fetch organizations:", error)
+      toast.error("Failed to load organizations")
     } finally {
       setLoading(false)
     }
   }
 
-  const handleEdit = (organization: Organization) => {
-    setEditingOrganization(organization)
-    setShowEditDialog(true)
+  const handleLoginAsTeamLeader = async (organizationId: string, organizationName: string) => {
+    try {
+      // Store the original role and organization context
+      sessionStorage.setItem('superAdminContext', JSON.stringify({
+        originalRole: 'SUPER_ADMIN',
+        actingAsRole: 'ADMIN',
+        targetOrganizationId: organizationId,
+        targetOrganizationName: organizationName
+      }))
+      
+      // Redirect to admin dashboard with organization context
+      router.push(`/admin?org=${organizationId}`)
+      toast.success(`Switched to Team Leader view for ${organizationName}`)
+    } catch (error) {
+      console.error("Failed to switch context:", error)
+      toast.error("Failed to switch to Team Leader view")
+    }
   }
 
-  const handleEditAdmin = (organization: Organization) => {
-    setEditingAdminOrgId(organization.id)
-    setShowEditAdminDialog(true)
-  }
-
-  const handleDelete = (organization: Organization) => {
-    setDeletingOrganization(organization)
-    setShowDeleteDialog(true)
-  }
-
-  const confirmDelete = async () => {
-    if (!deletingOrganization) return
+  const handleDeleteOrganization = async (id: string, name: string) => {
+    if (!confirm(`Are you sure you want to delete "${name}"? This action cannot be undone.`)) {
+      return
+    }
 
     try {
-      const response = await fetch(`/api/super-admin/organizations/${deletingOrganization.id}`, {
+      const response = await fetch(`/api/super-admin/organizations/${id}`, {
         method: "DELETE",
       })
 
       if (response.ok) {
-        toast({
-          title: "Success",
-          description: "Organization deleted successfully.",
-        })
-        setShowDeleteDialog(false)
-        setDeletingOrganization(null)
-        onUpdate()
+        toast.success("Organization deleted successfully")
         fetchOrganizations()
+        onUpdate()
       } else {
         const error = await response.json()
-        toast({
-          title: "Error",
-          description: error.message || "Failed to delete organization",
-          variant: "destructive",
-        })
+        toast.error(error.message || "Failed to delete organization")
       }
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred",
-        variant: "destructive",
-      })
+      console.error("Failed to delete organization:", error)
+      toast.error("Failed to delete organization")
     }
   }
 
   if (loading) {
-    return <div className="text-center py-4">Loading organizations...</div>
+    return (
+      <div className="space-y-4">
+        {[...Array(3)].map((_, i) => (
+          <Card key={i} className="animate-pulse">
+            <CardContent className="p-6">
+              <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
+              <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    )
   }
 
   if (organizations.length === 0) {
     return (
-      <div className="text-center py-8 text-gray-500">
-        No organizations found. Create your first organization to get started.
+      <div className="text-center py-8">
+        <p className="text-gray-500">No organizations found</p>
       </div>
     )
   }
 
   return (
     <>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>Description</TableHead>
-            <TableHead>Users</TableHead>
-            <TableHead>Areas</TableHead>
-            <TableHead>Departments</TableHead>
-            <TableHead>Created</TableHead>
-            <TableHead className="w-[70px]"></TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {organizations.map((org) => (
-            <TableRow key={org.id}>
-              <TableCell className="font-medium">{org.name}</TableCell>
-              <TableCell>{org.description || "-"}</TableCell>
-              <TableCell>
-                <Badge variant="secondary">{org._count.users}</Badge>
-              </TableCell>
-              <TableCell>
-                <Badge variant="secondary">{org._count.areas}</Badge>
-              </TableCell>
-              <TableCell>
-                <Badge variant="secondary">{org._count.departments}</Badge>
-              </TableCell>
-              <TableCell>{formatDate(new Date(org.createdAt))}</TableCell>
-              <TableCell>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="h-8 w-8 p-0">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => handleEdit(org)}>
-                      <Edit className="mr-2 h-4 w-4" />
-                      Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleEditAdmin(org)}>
-                      <UserCog className="mr-2 h-4 w-4" />
-                      Edit Admin
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      className="text-red-600"
-                      onClick={() => handleDelete(org)}
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </TableCell>
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Organization</TableHead>
+              <TableHead>Admin</TableHead>
+              <TableHead>Users</TableHead>
+              <TableHead>Areas</TableHead>
+              <TableHead>Departments</TableHead>
+              <TableHead>Templates</TableHead>
+              <TableHead>Created</TableHead>
+              <TableHead className="w-[70px]"></TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {organizations.map((org) => (
+              <TableRow key={org.id}>
+                <TableCell>
+                  <div>
+                    <div className="font-medium">{org.name}</div>
+                    {org.description && (
+                      <div className="text-sm text-muted-foreground">{org.description}</div>
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  {org.admin ? (
+                    <div>
+                      <div className="font-medium">{org.admin.name}</div>
+                      <div className="text-sm text-muted-foreground">{org.admin.email}</div>
+                    </div>
+                  ) : (
+                    <Badge variant="outline">No Admin</Badge>
+                  )}
+                </TableCell>
+                <TableCell>
+                  <Badge variant="secondary">{org._count.users}</Badge>
+                </TableCell>
+                <TableCell>
+                  <Badge variant="secondary">{org._count.areas}</Badge>
+                </TableCell>
+                <TableCell>
+                  <Badge variant="secondary">{org._count.departments}</Badge>
+                </TableCell>
+                <TableCell>
+                  <Badge variant="secondary">{org._count.templates}</Badge>
+                </TableCell>
+                <TableCell>
+                  {new Date(org.createdAt).toLocaleDateString()}
+                </TableCell>
+                <TableCell>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="h-8 w-8 p-0">
+                        <span className="sr-only">Open menu</span>
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={() => handleLoginAsTeamLeader(org.id, org.name)}
+                        className="cursor-pointer"
+                      >
+                        <Shield className="mr-2 h-4 w-4" />
+                        Login as Team Leader
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => setEditingOrg(org)}
+                        className="cursor-pointer"
+                      >
+                        <Edit className="mr-2 h-4 w-4" />
+                        Edit Organization
+                      </DropdownMenuItem>
+                      {org.admin && (
+                        <DropdownMenuItem
+                          onClick={() => setEditingAdmin({ org, admin: org.admin })}
+                          className="cursor-pointer"
+                        >
+                          <UserCog className="mr-2 h-4 w-4" />
+                          Edit Admin
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => handleDeleteOrganization(org.id, org.name)}
+                        className="cursor-pointer text-red-600 hover:text-red-700"
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Delete Organization
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
 
-      <EditOrganizationDialog
-        open={showEditDialog}
-        onOpenChange={setShowEditDialog}
-        onSuccess={() => {
-          onUpdate()
-          fetchOrganizations()
-        }}
-        organization={editingOrganization}
-      />
+      {editingOrg && (
+        <EditOrganizationDialog
+          organization={editingOrg}
+          open={!!editingOrg}
+          onOpenChange={(open) => !open && setEditingOrg(null)}
+          onSuccess={() => {
+            fetchOrganizations()
+            onUpdate()
+            setEditingOrg(null)
+          }}
+        />
+      )}
 
-      <EditAdminDialog
-        open={showEditAdminDialog}
-        onOpenChange={setShowEditAdminDialog}
-        onSuccess={() => {
-          onUpdate()
-          fetchOrganizations()
-        }}
-        organizationId={editingAdminOrgId}
-      />
-
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Organization</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete "{deletingOrganization?.name}"? This action cannot be undone.
-              {deletingOrganization && (
-                <span className="block mt-2 text-red-600 font-medium">
-                  This organization has {deletingOrganization._count?.users} users.
-                </span>
-              )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmDelete}
-              disabled={!deletingOrganization}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {editingAdmin && (
+        <EditAdminDialog
+          organizationId={editingAdmin.org.id}
+          admin={editingAdmin.admin}
+          open={!!editingAdmin}
+          onOpenChange={(open) => !open && setEditingAdmin(null)}
+          onSuccess={() => {
+            fetchOrganizations()
+            onUpdate()
+            setEditingAdmin(null)
+          }}
+        />
+      )}
     </>
   )
 }

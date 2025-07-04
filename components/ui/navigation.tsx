@@ -78,10 +78,26 @@ export function Navigation() {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-4">
             {/* Role Badge */}
-            <div
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold shadow-md ${getRoleColor(session.user.role)}`}
-            >
-              {getRoleDisplay(session.user.role)}
+            <div className="flex items-center space-x-2">
+              {/* Check if SuperAdmin is acting as Team Leader */}
+              {session.user.role === "SUPER_ADMIN" &&
+              typeof window !== "undefined" &&
+              sessionStorage.getItem("superAdminContext") ? (
+                <>
+                  <div className="px-3 py-1.5 rounded-full text-xs font-semibold shadow-md bg-gradient-to-r from-purple-600 to-purple-700 text-white">
+                    Super Admin
+                  </div>
+                  <div className="px-3 py-1.5 rounded-full text-xs font-semibold shadow-md bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+                    Acting as Team Leader
+                  </div>
+                </>
+              ) : (
+                <div
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold shadow-md ${getRoleColor(session.user.role)}`}
+                >
+                  {getRoleDisplay(session.user.role)}
+                </div>
+              )}
             </div>
 
             {/* User Menu */}
@@ -93,7 +109,7 @@ export function Navigation() {
                 >
                   <Avatar className="h-10 w-10 ring-2 ring-white/20">
                     {session.user.profileImage ? (
-                      <AvatarImage src={session.user.profileImage} alt="Avatar" />
+                      <AvatarImage src={session.user.profileImage || "/placeholder.svg"} alt="Avatar" />
                     ) : (
                       <AvatarFallback className="bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold">
                         {getInitials(session.user.name || session.user.email)}
@@ -106,7 +122,7 @@ export function Navigation() {
                 <div className="flex items-center justify-start gap-3">
                   <Avatar className="h-12 w-12 ring-2 ring-white/20">
                     {session.user.profileImage ? (
-                      <AvatarImage src={session.user.profileImage} alt="Avatar" />
+                      <AvatarImage src={session.user.profileImage || "/placeholder.svg"} alt="Avatar" />
                     ) : (
                       <AvatarFallback className="bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold">
                         {getInitials(session.user.name || session.user.email)}
@@ -167,12 +183,12 @@ export function Navigation() {
               <div className="flex items-center space-x-3 p-3 rounded-lg bg-white/10">
                 <Avatar className="h-10 w-10 ring-2 ring-white/20">
                   {session.user.profileImage ? (
-                      <AvatarImage src={session.user.profileImage} alt="Avatar" />
-                    ) : (
-                      <AvatarFallback className="bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold">
-                        {getInitials(session.user.name || session.user.email)}
-                      </AvatarFallback>
-                    )}
+                    <AvatarImage src={session.user.profileImage || "/placeholder.svg"} alt="Avatar" />
+                  ) : (
+                    <AvatarFallback className="bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold">
+                      {getInitials(session.user.name || session.user.email)}
+                    </AvatarFallback>
+                  )}
                 </Avatar>
                 <div>
                   <p className="font-semibold text-gray-900 dark:text-gray-100">{session.user.name}</p>
