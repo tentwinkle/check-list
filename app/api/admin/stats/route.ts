@@ -1,22 +1,14 @@
 import { NextResponse } from "next/server"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/lib/auth"
+import { getAdminContext } from "@/lib/adminContext"
 import { prisma } from "@/lib/prisma"
-import type { Session } from "next-auth"
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const session: Session | null = await getServerSession(authOptions)
-
-    if (!session || session.user.role !== "ADMIN") {
+    const context = await getAdminContext(request)
+    if (!context) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
-
-    const organizationId = session.user.organizationId
-
-    if (!organizationId) {
-      return NextResponse.json({ error: "Organization not found" }, { status: 400 })
-    }
+    const { organizationId } = context
 
     const [totalAreas, totalDepartments, totalUsers, totalTemplates, inspectionStats] = await Promise.all([
       prisma.area.count({
