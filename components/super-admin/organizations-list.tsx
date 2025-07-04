@@ -93,26 +93,37 @@ export function OrganizationsList({ onUpdate }: OrganizationsListProps) {
   }
 
   const handleLoginAsTeamLeader = (organization: Organization) => {
-    // Store the Super Admin context with specific organization
-    const superAdminContext = {
-      originalRole: "SUPER_ADMIN",
-      targetOrganization: {
-        id: organization.id,
-        name: organization.name,
-      },
-      loginAsAdmin: true,
-      timestamp: Date.now(),
+    try {
+      // Store the Super Admin context with specific organization
+      const superAdminContext = {
+        originalRole: "SUPER_ADMIN",
+        targetOrganization: {
+          id: organization.id,
+          name: organization.name,
+        },
+        loginAsAdmin: true,
+        timestamp: Date.now(),
+      }
+
+      sessionStorage.setItem("superAdminContext", JSON.stringify(superAdminContext))
+
+      toast({
+        title: "Switching to Team Leader View",
+        description: `Accessing ${organization.name} as Team Leader`,
+      })
+
+      // Use window.location.href for a full page reload to ensure context is properly set
+      setTimeout(() => {
+        window.location.href = "/admin"
+      }, 500)
+    } catch (error) {
+      console.error("Failed to switch to team leader view:", error)
+      toast({
+        title: "Error",
+        description: "Failed to switch to team leader view",
+        variant: "destructive",
+      })
     }
-
-    sessionStorage.setItem("superAdminContext", JSON.stringify(superAdminContext))
-
-    toast({
-      title: "Switching to Team Leader View",
-      description: `Accessing ${organization.name} as Team Leader`,
-    })
-
-    // Redirect to admin dashboard
-    window.location.href = "/admin"
   }
 
   const confirmDelete = async () => {
