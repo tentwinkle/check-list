@@ -4,6 +4,7 @@ import type React from "react"
 
 import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
+import { useSession } from "next-auth/react"
 import { Navigation } from "@/components/ui/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -13,7 +14,7 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
 import { CheckCircle, XCircle, ArrowLeft, ArrowRight, Save, Send, Download } from "lucide-react"
-import { formatDate } from "@/lib/utils"
+import { formatDate, getDashboardPath } from "@/lib/utils"
 
 interface InspectionItem {
   id: string
@@ -58,6 +59,7 @@ export function InspectionInterface({ inspectionId }: InspectionInterfaceProps) 
   const { toast } = useToast()
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { data: session } = useSession()
 
   useEffect(() => {
     const initialize = async () => {
@@ -93,7 +95,7 @@ export function InspectionInterface({ inspectionId }: InspectionInterfaceProps) 
         description: error.message || "Failed to load inspection",
         variant: "destructive",
       })
-      router.push("/inspector")
+      router.push(getDashboardPath(session?.user.role))
       return null
     } catch (error) {
       console.error("Failed to fetch inspection:", error)
@@ -102,7 +104,7 @@ export function InspectionInterface({ inspectionId }: InspectionInterfaceProps) 
         description: "An unexpected error occurred",
         variant: "destructive",
       })
-      router.push("/inspector")
+      router.push(getDashboardPath(session?.user.role))
       return null
     } finally {
       setLoading(false)
@@ -283,7 +285,11 @@ export function InspectionInterface({ inspectionId }: InspectionInterfaceProps) 
         {/* Header */}
         <div className="mb-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <Button variant="outline" onClick={() => router.push("/inspector")} className="w-full sm:w-auto">
+            <Button
+              variant="outline"
+              onClick={() => router.push(getDashboardPath(session?.user.role))}
+              className="w-full sm:w-auto"
+            >
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Dashboard
             </Button>

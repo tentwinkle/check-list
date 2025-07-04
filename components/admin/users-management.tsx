@@ -9,9 +9,13 @@ import { UsersList } from "./users-list"
 
 interface UsersManagementProps {
   onUpdate: () => void
+  organizationId?: string
 }
 
-export function UsersManagement({ onUpdate }: UsersManagementProps) {
+export function UsersManagement({
+  onUpdate,
+  organizationId,
+}: UsersManagementProps) {
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [listKey, setListKey] = useState(0)
 
@@ -30,7 +34,11 @@ export function UsersManagement({ onUpdate }: UsersManagementProps) {
         </div>
       </CardHeader>
       <CardContent>
-        <UsersList key={listKey} onUpdate={onUpdate} />
+        <UsersList
+          key={listKey}
+          onUpdate={onUpdate}
+          organizationId={organizationId}
+        />
       </CardContent>
 
       <CreateUserDialog
@@ -40,6 +48,7 @@ export function UsersManagement({ onUpdate }: UsersManagementProps) {
           onUpdate()
           setListKey((k) => k + 1)
         }}
+        organizationId={organizationId}
       />
     </Card>
   )

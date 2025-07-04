@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
 import { Navigation } from "@/components/ui/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import Link from "next/link"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { AreasManagement } from "./areas-management"
@@ -13,6 +14,7 @@ import { TemplatesManagement } from "./templates-management"
 import { InspectionsOverview } from "./inspections-overview"
 import { buildAdminApiUrl } from "@/lib/admin"
 import { CreateInspectionDialog } from "./create-inspection-dialog"
+import { QRScanner } from "@/components/inspector/qr-scanner"
 import {
   Building2,
   Users,
@@ -24,6 +26,8 @@ import {
   CheckCircle,
   AlertTriangle,
   TrendingUp,
+  QrCode,
+  Zap,
 } from "lucide-react"
 
 interface DashboardStats {
@@ -58,6 +62,7 @@ export function AdminDashboard({
     overdueInspections: 0,
   })
   const [createInspectionOpen, setCreateInspectionOpen] = useState(false)
+  const [showQRScanner, setShowQRScanner] = useState(false)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -119,6 +124,13 @@ export function AdminDashboard({
               </p>
             </div>
             <div className="flex items-center gap-2">
+              {session?.user?.role === "SUPER_ADMIN" && (
+                <Link href="/super-admin">
+                  <Button variant="ghost" className="glass">
+                    Back to Super Admin
+                  </Button>
+                </Link>
+              )}
               <div className="px-3 py-1.5 bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 rounded-full text-sm font-medium">
                 <TrendingUp className="inline h-4 w-4 mr-1" />
                 All Systems Active
@@ -191,6 +203,28 @@ export function AdminDashboard({
                 {stats.activeInspections}
               </div>
               <p className="text-xs text-gray-600 mt-1">In progress</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="mb-8 animate-slide-up">
+          <Card variant="glass" className="overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+              <CardTitle className="flex items-center gap-2">
+                <Zap className="h-5 w-5" />
+                Quick Actions
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <Button
+                onClick={() => setShowQRScanner(true)}
+                className="h-14 text-base font-semibold flex items-center"
+                size="lg"
+              >
+                <QrCode className="mr-3 h-5 w-5" />
+                <span>Scan QR Code</span>
+              </Button>
             </CardContent>
           </Card>
         </div>
@@ -331,6 +365,10 @@ export function AdminDashboard({
           onOpenChange={setCreateInspectionOpen}
           onSuccess={handleCreateInspectionSuccess}
           organizationId={organizationId}
+        />
+        <QRScanner
+          open={showQRScanner}
+          onClose={() => setShowQRScanner(false)}
         />
       </div>
     </div>
