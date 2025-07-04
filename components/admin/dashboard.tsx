@@ -6,6 +6,7 @@ import { Navigation } from "@/components/ui/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { AreasManagement } from "./areas-management"
 import { DepartmentsManagement } from "./departments-management"
 import { UsersManagement } from "./users-management"
@@ -23,6 +24,9 @@ import {
   CheckCircle,
   AlertTriangle,
   TrendingUp,
+  ArrowLeft,
+  Crown,
+  Building,
 } from "lucide-react"
 
 interface DashboardStats {
@@ -36,6 +40,16 @@ interface DashboardStats {
   pendingInspections: number
   dueSoonInspections: number
   overdueInspections: number
+}
+
+interface SuperAdminContext {
+  originalRole: string
+  targetOrganization: {
+    id: string
+    name: string
+  }
+  loginAsAdmin: boolean
+  timestamp: number
 }
 
 export function AdminDashboard() {
@@ -54,8 +68,23 @@ export function AdminDashboard() {
   })
   const [createInspectionOpen, setCreateInspectionOpen] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [superAdminContext, setSuperAdminContext] = useState<SuperAdminContext | null>(null)
 
   useEffect(() => {
+    // Check if Super Admin is acting as Team Leader
+    const contextData = sessionStorage.getItem("superAdminContext")
+    if (contextData) {
+      try {
+        const context = JSON.parse(contextData) as SuperAdminContext
+        if (context.originalRole === "SUPER_ADMIN" && context.loginAsAdmin) {
+          setSuperAdminContext(context)
+        }
+      } catch (error) {
+        console.error("Failed to parse super admin context:", error)
+        sessionStorage.removeItem("superAdminContext")
+      }
+    }
+
     fetchStats()
   }, [])
 
@@ -75,6 +104,11 @@ export function AdminDashboard() {
 
   const handleCreateInspectionSuccess = () => {
     fetchStats() // Refresh stats after creating inspection
+  }
+
+  const handleReturnToSuperAdmin = () => {
+    sessionStorage.removeItem("superAdminContext")
+    window.location.href = "/super-admin"
   }
 
   if (loading) {
@@ -104,14 +138,50 @@ export function AdminDashboard() {
         <div className="mb-8 animate-fade-in">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent inline-block">
-                Team Leader Dashboard
-              </h1>
-              <p className="mt-2 text-gray-600 mobile-text">
-                Welcome back, {session?.user?.name}! Manage your entire organization
-              </p>
+              <div className="flex items-center gap-3 mb-2">
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent inline-block">
+                  Team Leader Dashboard
+                </h1>
+                {superAdminContext && (
+                  <Badge
+                    variant="outline"
+                    className="bg-purple-50 text-purple-700 border-purple-200 flex items-center gap-1"
+                  >
+                    <Crown className="w-3 h-3" />
+                    Super Admin View
+                  </Badge>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <p className="text-gray-600 mobile-text">
+                  Welcome back, {session?.user?.name}!
+                  {superAdminContext ? (
+                    <span className="ml-1">
+                      Managing <strong>{superAdminContext.targetOrganization.name}</strong>
+                    </span>
+                  ) : (
+                    <span className="ml-1">Manage your entire organization</span>
+                  )}
+                </p>
+              </div>
+              {superAdminContext && (
+                <div className="mt-2 flex items-center gap-2 text-sm text-purple-600">
+                  <Building className="w-4 h-4" />
+                  <span>Organization: {superAdminContext.targetOrganization.name}</span>
+                </div>
+              )}
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
+              {superAdminContext && (
+                <Button
+                  variant="outline"
+                  onClick={handleReturnToSuperAdmin}
+                  className="w-full sm:w-auto bg-transparent border-purple-200 text-purple-700 hover:bg-purple-50"
+                >
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Return to Super Admin
+                </Button>
+              )}
               <div className="px-3 py-1.5 bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 rounded-full text-sm font-medium">
                 <TrendingUp className="inline h-4 w-4 mr-1" />
                 All Systems Active
@@ -288,7 +358,10 @@ export function AdminDashboard() {
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                   <h3 className="text-lg sm:text-xl font-semibold text-gray-900">Inspections Overview</h3>
-                  <p className="text-sm text-gray-600">Monitor and manage all inspections across your organization</p>
+                  <p className="text-sm text-gray-600">
+                    Monitor and manage all inspections
+                    {superAdminContext && <span className="ml-1">for {superAdminContext.targetOrganization.name}</span>}
+                  </p>
                 </div>
                 <Button onClick={() => setCreateInspectionOpen(true)} className="w-full sm:w-auto" size="lg">
                   <Plus className="mr-2 h-4 w-4" />
