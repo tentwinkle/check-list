@@ -22,7 +22,7 @@ import {
   CheckCircle,
   Clock,
 } from "lucide-react";
-import { getInspectionStatus, formatDate } from "@/lib/utils";
+import { getInspectionStatus, formatDate, getDashboardPath } from "@/lib/utils";
 import Link from "next/link";
 
 interface InspectionInstance {
@@ -148,7 +148,7 @@ export function InspectionsList() {
         <div className="mb-6">
           <div className="flex items-center justify-between">
             <Button variant="outline">
-              <Link href="/inspector" className="flex items-center">
+              <Link href={getDashboardPath(session?.user?.role)} className="flex items-center">
                 <span className="flex items-center">
                   <ArrowLeft className="mr-2 h-4 w-4" />
                   Back to Dashboard
