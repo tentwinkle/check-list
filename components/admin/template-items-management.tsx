@@ -92,7 +92,10 @@ export function TemplateItemsManagement({
 
       <QRCodeDialog
         open={showQRDialog}
-        onOpenChange={setShowQRDialog}
+        onOpenChange={(open) => {
+          setShowQRDialog(open)
+          if (!open) setSelectedItem(null)
+        }}
         templateId={templateId}
         selectedItem={selectedItem}
         organizationId={organizationId}
