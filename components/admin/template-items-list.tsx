@@ -24,7 +24,19 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { EditTemplateItemDialog } from "./edit-template-item-dialog";
 import { EditTemplateItemDialog } from "./edit-template-item-dialog";
 
 interface TemplateItem {
@@ -55,6 +67,9 @@ export function TemplateItemsList({
   const [loading, setLoading] = useState(true);
   const [editingItem, setEditingItem] = useState<TemplateItem | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editingItem, setEditingItem] = useState<TemplateItem | null>(null);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [loadingItem, setLoadingItem] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -62,6 +77,7 @@ export function TemplateItemsList({
   }, [templateId, refreshKey]);
 
   const fetchItems = async () => {
+    setLoading(true);
     setLoading(true);
     try {
       const response = await fetch(
@@ -90,17 +106,15 @@ export function TemplateItemsList({
   };
 
   const handleReorder = async (itemId: string, direction: "up" | "down") => {
+    setLoadingItem(itemId);
     try {
-      const response = await fetch(
-        `/api/admin/template-items/${itemId}/reorder`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ direction }),
-        }
-      );
+      const response = await fetch(`/api/admin/template-items/${itemId}/reorder`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ direction }),
+      });
 
       if (response.ok) {
         await fetchItems();
@@ -118,6 +132,8 @@ export function TemplateItemsList({
         description: "An unexpected error occurred",
         variant: "destructive",
       });
+    } finally {
+      setLoadingItem(null);
     }
   };
 
@@ -126,16 +142,17 @@ export function TemplateItemsList({
     setShowEditDialog(true);
   };
 
-  const handleDelete = async (itemId: string) => {
-    if (!confirm("Are you sure you want to delete this item?")) return;
+  const handleEdit = (item: TemplateItem) => {
+    setEditingItem(item);
+    setShowEditDialog(true);
+  };
 
+  const handleDelete = async (itemId: string) => {
+    setLoadingItem(itemId);
     try {
-      const response = await fetch(
-        `/api/admin/template-items/${itemId}`,
-        {
-          method: "DELETE",
-        }
-      );
+      const response = await fetch(`/api/admin/template-items/${itemId}`, {
+        method: "DELETE",
+      });
 
       if (response.ok) {
         toast({
@@ -158,6 +175,8 @@ export function TemplateItemsList({
         description: "An unexpected error occurred",
         variant: "destructive",
       });
+    } finally {
+      setLoadingItem(null);
     }
   };
 
@@ -270,5 +289,119 @@ export function TemplateItemsList({
         organizationId={organizationId}
       />
     </>
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead className="w-[60px]">Order</TableHead>
+          <TableHead>Name</TableHead>
+          <TableHead>Description</TableHead>
+          <TableHead>Location</TableHead>
+          <TableHead>QR Code</TableHead>
+          <TableHead className="w-[120px]">Actions</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {sortedItems.map((item, index) => (
+          <TableRow key={item.id}>
+            <TableCell>
+              <div className="flex items-center gap-1">
+                <span className="text-sm font-medium">{item.order}</span>
+                <div className="flex flex-col">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0"
+                    onClick={() => handleReorder(item.id, "up")}
+                    disabled={index === 0 || loadingItem === item.id}
+                  >
+                    <MoveUp className="h-3 w-3" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0"
+                    onClick={() => handleReorder(item.id, "down")}
+                    disabled={index === sortedItems.length - 1 || loadingItem === item.id}
+                  >
+                    <MoveDown className="h-3 w-3" />
+                  </Button>
+                </div>
+              </div>
+            </TableCell>
+            <TableCell className="font-medium">{item.name}</TableCell>
+            <TableCell>{item.description || "-"}</TableCell>
+            <TableCell>{item.location || "-"}</TableCell>
+            <TableCell>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onShowQR(item)}
+              >
+                <QrCode className="h-4 w-4" />
+              </Button>
+            </TableCell>
+            <TableCell>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="h-8 w-8 p-0">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => handleEdit(item)}>
+                    <Edit className="mr-2 h-4 w-4" />
+                    Edit
+                  </DropdownMenuItem>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <DropdownMenuItem
+                        onSelect={(e) => e.preventDefault()}
+                        className="text-red-600"
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Delete
+                      </DropdownMenuItem>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Template Item</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to delete "{item.name}"? This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => handleDelete(item.id)}
+                          className="bg-red-600 hover:bg-red-700"
+                          disabled={loadingItem === item.id}
+                        >
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+
+    <EditTemplateItemDialog
+      open={showEditDialog}
+      onOpenChange={(open) => {
+        setShowEditDialog(open);
+        if (!open) setEditingItem(null);
+      }}
+      templateId={templateId}
+      item={editingItem}
+      onSuccess={() => {
+        fetchItems();
+        onUpdate();
+      }}
+      organizationId={organizationId}
+    />
   );
 }
