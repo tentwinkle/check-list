@@ -17,6 +17,7 @@ export function TemplatesManagement({
   organizationId,
 }: TemplatesManagementProps) {
   const [showCreateDialog, setShowCreateDialog] = useState(false)
+  const [refreshKey, setRefreshKey] = useState(0)
 
   return (
     <Card>
@@ -33,13 +34,20 @@ export function TemplatesManagement({
         </div>
       </CardHeader>
       <CardContent>
-        <TemplatesList onUpdate={onUpdate} organizationId={organizationId} />
+        <TemplatesList
+          onUpdate={onUpdate}
+          organizationId={organizationId}
+          refreshKey={refreshKey}
+        />
       </CardContent>
 
       <CreateTemplateDialog
         open={showCreateDialog}
         onOpenChange={setShowCreateDialog}
-        onSuccess={onUpdate}
+        onSuccess={() => {
+          onUpdate()
+          setRefreshKey((k) => k + 1)
+        }}
         organizationId={organizationId}
       />
     </Card>
