@@ -153,18 +153,11 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       return NextResponse.json({ error: "Cannot delete your own account" }, { status: 400 })
     }
 
-    // Check if user has inspections
-    const inspectionCount = await prisma.inspectionInstance.count({
-      where: { inspectorId: params.id },
-    })
-
-    if (inspectionCount > 0) {
-      return NextResponse.json({ error: "Cannot delete user with existing inspections" }, { status: 400 })
-    }
-
-    await prisma.user.delete({
-      where: { id: params.id },
-    })
+    await prisma.$transaction([
+      prisma.followUp.deleteMany({ where: { userId: params.id } }),
+      prisma.inspectionInstance.deleteMany({ where: { inspectorId: params.id } }),
+      prisma.user.delete({ where: { id: params.id } }),
+    ])
 
     await createAuditLog(session.user.id, "DELETE_USER", "User", params.id)
 
