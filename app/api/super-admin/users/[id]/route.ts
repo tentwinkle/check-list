@@ -99,4 +99,41 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
+export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+  try {
+    const session: Session | null = await getServerSession(authOptions)
+
+    if (!session || session.user.role !== "SUPER_ADMIN") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const existingUser = await prisma.user.findUnique({ where: { id: params.id } })
+
+    if (!existingUser || existingUser.role !== "ADMIN") {
+      return NextResponse.json({ error: "User not found" }, { status: 404 })
+    }
+
+    const inspectionCount = await prisma.inspectionInstance.count({
+      where: { inspectorId: params.id },
+    })
+
+    if (inspectionCount > 0) {
+      return NextResponse.json(
+        { error: "Cannot delete user with existing inspections" },
+        { status: 400 },
+      )
+    }
+
+    await prisma.$transaction([
+      prisma.session.deleteMany({ where: { userId: params.id } }),
+      prisma.user.delete({ where: { id: params.id } }),
+    ])
+
+    return NextResponse.json({ message: "User deleted successfully" })
+  } catch (error) {
+    console.error("Error deleting user:", error)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+  }
+}
+
 export const dynamic = "force-dynamic";

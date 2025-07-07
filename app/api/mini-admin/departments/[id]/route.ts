@@ -81,6 +81,8 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
 
     await prisma.$transaction([
       prisma.user.deleteMany({ where: { departmentId: params.id } }),
+      prisma.inspectionInstance.deleteMany({ where: { departmentId: params.id } }),
+      prisma.masterTemplate.deleteMany({ where: { departmentId: params.id } }),
       prisma.department.delete({ where: { id: params.id } }),
     ])
 
