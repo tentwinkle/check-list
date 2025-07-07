@@ -18,7 +18,6 @@ import {
   MoveUp,
   MoveDown,
 } from "lucide-react";
-import { buildAdminApiUrl } from "@/lib/admin";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -62,17 +61,25 @@ export function TemplateItemsList({
   const fetchItems = async () => {
     try {
       const response = await fetch(
-        buildAdminApiUrl(
-          `/api/admin/template-items?templateId=${templateId}`,
-          organizationId,
-        ),
+        `/api/admin/template-items?templateId=${templateId}`
       );
       if (response.ok) {
         const data = await response.json();
         setItems(data);
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to load template items",
+          variant: "destructive",
+        });
       }
     } catch (error) {
       console.error("Failed to fetch template items:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load template items",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -81,21 +88,18 @@ export function TemplateItemsList({
   const handleReorder = async (itemId: string, direction: "up" | "down") => {
     try {
       const response = await fetch(
-        buildAdminApiUrl(
-          `/api/admin/template-items/${itemId}/reorder`,
-          organizationId,
-        ),
+        `/api/admin/template-items/${itemId}/reorder`,
         {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ direction }),
-        },
+        }
       );
 
       if (response.ok) {
-        fetchItems();
+        await fetchItems();
         onUpdate();
       } else {
         toast({
@@ -118,10 +122,10 @@ export function TemplateItemsList({
 
     try {
       const response = await fetch(
-        buildAdminApiUrl(`/api/admin/template-items/${itemId}`, organizationId),
+        `/api/admin/template-items/${itemId}`,
         {
           method: "DELETE",
-        },
+        }
       );
 
       if (response.ok) {
@@ -129,7 +133,7 @@ export function TemplateItemsList({
           title: "Success",
           description: "Template item deleted successfully.",
         });
-        fetchItems();
+        await fetchItems();
         onUpdate();
       } else {
         const error = await response.json();
