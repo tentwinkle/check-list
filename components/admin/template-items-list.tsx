@@ -24,7 +24,19 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { EditTemplateItemDialog } from "./edit-template-item-dialog";
 
 interface TemplateItem {
   id: string;
@@ -52,6 +64,9 @@ export function TemplateItemsList({
 }: TemplateItemsListProps) {
   const [items, setItems] = useState<TemplateItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editingItem, setEditingItem] = useState<TemplateItem | null>(null);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [loadingItem, setLoadingItem] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -59,6 +74,7 @@ export function TemplateItemsList({
   }, [templateId, refreshKey]);
 
   const fetchItems = async () => {
+    setLoading(true);
     try {
       const response = await fetch(
         `/api/admin/template-items?templateId=${templateId}`
@@ -86,17 +102,15 @@ export function TemplateItemsList({
   };
 
   const handleReorder = async (itemId: string, direction: "up" | "down") => {
+    setLoadingItem(itemId);
     try {
-      const response = await fetch(
-        `/api/admin/template-items/${itemId}/reorder`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ direction }),
-        }
-      );
+      const response = await fetch(`/api/admin/template-items/${itemId}/reorder`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ direction }),
+      });
 
       if (response.ok) {
         await fetchItems();
@@ -114,19 +128,22 @@ export function TemplateItemsList({
         description: "An unexpected error occurred",
         variant: "destructive",
       });
+    } finally {
+      setLoadingItem(null);
     }
   };
 
-  const handleDelete = async (itemId: string) => {
-    if (!confirm("Are you sure you want to delete this item?")) return;
+  const handleEdit = (item: TemplateItem) => {
+    setEditingItem(item);
+    setShowEditDialog(true);
+  };
 
+  const handleDelete = async (itemId: string) => {
+    setLoadingItem(itemId);
     try {
-      const response = await fetch(
-        `/api/admin/template-items/${itemId}`,
-        {
-          method: "DELETE",
-        }
-      );
+      const response = await fetch(`/api/admin/template-items/${itemId}`, {
+        method: "DELETE",
+      });
 
       if (response.ok) {
         toast({
@@ -149,6 +166,8 @@ export function TemplateItemsList({
         description: "An unexpected error occurred",
         variant: "destructive",
       });
+    } finally {
+      setLoadingItem(null);
     }
   };
 
@@ -190,7 +209,7 @@ export function TemplateItemsList({
                     size="sm"
                     className="h-6 w-6 p-0"
                     onClick={() => handleReorder(item.id, "up")}
-                    disabled={index === 0}
+                    disabled={index === 0 || loadingItem === item.id}
                   >
                     <MoveUp className="h-3 w-3" />
                   </Button>
@@ -199,7 +218,7 @@ export function TemplateItemsList({
                     size="sm"
                     className="h-6 w-6 p-0"
                     onClick={() => handleReorder(item.id, "down")}
-                    disabled={index === sortedItems.length - 1}
+                    disabled={index === sortedItems.length - 1 || loadingItem === item.id}
                   >
                     <MoveDown className="h-3 w-3" />
                   </Button>
@@ -226,17 +245,39 @@ export function TemplateItemsList({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleEdit(item)}>
                     <Edit className="mr-2 h-4 w-4" />
                     Edit
                   </DropdownMenuItem>
-                  <DropdownMenuItem
-                    className="text-red-600"
-                    onClick={() => handleDelete(item.id)}
-                  >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Delete
-                  </DropdownMenuItem>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <DropdownMenuItem
+                        onSelect={(e) => e.preventDefault()}
+                        className="text-red-600"
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Delete
+                      </DropdownMenuItem>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Template Item</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to delete "{item.name}"? This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => handleDelete(item.id)}
+                          className="bg-red-600 hover:bg-red-700"
+                          disabled={loadingItem === item.id}
+                        >
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </DropdownMenuContent>
               </DropdownMenu>
             </TableCell>
@@ -244,5 +285,20 @@ export function TemplateItemsList({
         ))}
       </TableBody>
     </Table>
+
+    <EditTemplateItemDialog
+      open={showEditDialog}
+      onOpenChange={(open) => {
+        setShowEditDialog(open);
+        if (!open) setEditingItem(null);
+      }}
+      templateId={templateId}
+      item={editingItem}
+      onSuccess={() => {
+        fetchItems();
+        onUpdate();
+      }}
+      organizationId={organizationId}
+    />
   );
 }
