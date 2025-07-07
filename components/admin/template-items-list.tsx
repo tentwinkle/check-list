@@ -26,6 +26,18 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { EditTemplateItemDialog } from "./edit-template-item-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { buildAdminApiUrl } from "@/lib/admin";
 
 interface TemplateItem {
   id: string;
@@ -65,7 +77,7 @@ export function TemplateItemsList({
     setLoading(true);
     try {
       const response = await fetch(
-        `/api/admin/template-items?templateId=${templateId}`
+        buildAdminApiUrl(`/api/admin/template-items?templateId=${templateId}`, organizationId)
       );
       if (response.ok) {
         const data = await response.json();
@@ -92,7 +104,7 @@ export function TemplateItemsList({
   const handleReorder = async (itemId: string, direction: "up" | "down") => {
     try {
       const response = await fetch(
-        `/api/admin/template-items/${itemId}/reorder`,
+        buildAdminApiUrl(`/api/admin/template-items/${itemId}/reorder`, organizationId),
         {
           method: "PUT",
           headers: {
@@ -127,11 +139,9 @@ export function TemplateItemsList({
   };
 
   const handleDelete = async (itemId: string) => {
-    if (!confirm("Are you sure you want to delete this item?")) return;
-
     try {
       const response = await fetch(
-        `/api/admin/template-items/${itemId}`,
+        buildAdminApiUrl(`/api/admin/template-items/${itemId}`, organizationId),
         {
           method: "DELETE",
         }
@@ -240,13 +250,28 @@ export function TemplateItemsList({
                       <Edit className="mr-2 h-4 w-4" />
                       Edit
                     </DropdownMenuItem>
-                    <DropdownMenuItem
-                      className="text-red-600"
-                      onClick={() => handleDelete(item.id)}
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Delete
-                    </DropdownMenuItem>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-600">
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete
+                        </DropdownMenuItem>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete Template Item</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to delete "{item.name}"? This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleDelete(item.id)} className="bg-red-600 hover:bg-red-700">
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </TableCell>
