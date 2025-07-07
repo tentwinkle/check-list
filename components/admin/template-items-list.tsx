@@ -25,6 +25,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
+import { EditTemplateItemDialog } from "./edit-template-item-dialog";
 
 interface TemplateItem {
   id: string;
@@ -52,6 +53,8 @@ export function TemplateItemsList({
 }: TemplateItemsListProps) {
   const [items, setItems] = useState<TemplateItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editingItem, setEditingItem] = useState<TemplateItem | null>(null);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -59,6 +62,7 @@ export function TemplateItemsList({
   }, [templateId, refreshKey]);
 
   const fetchItems = async () => {
+    setLoading(true);
     try {
       const response = await fetch(
         `/api/admin/template-items?templateId=${templateId}`
@@ -117,6 +121,11 @@ export function TemplateItemsList({
     }
   };
 
+  const handleEdit = (item: TemplateItem) => {
+    setEditingItem(item);
+    setShowEditDialog(true);
+  };
+
   const handleDelete = async (itemId: string) => {
     if (!confirm("Are you sure you want to delete this item?")) return;
 
@@ -167,82 +176,99 @@ export function TemplateItemsList({
   const sortedItems = [...items].sort((a, b) => a.order - b.order);
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead className="w-[60px]">Order</TableHead>
-          <TableHead>Name</TableHead>
-          <TableHead>Description</TableHead>
-          <TableHead>Location</TableHead>
-          <TableHead>QR Code</TableHead>
-          <TableHead className="w-[120px]">Actions</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {sortedItems.map((item, index) => (
-          <TableRow key={item.id}>
-            <TableCell>
-              <div className="flex items-center gap-1">
-                <span className="text-sm font-medium">{item.order}</span>
-                <div className="flex flex-col">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 w-6 p-0"
-                    onClick={() => handleReorder(item.id, "up")}
-                    disabled={index === 0}
-                  >
-                    <MoveUp className="h-3 w-3" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 w-6 p-0"
-                    onClick={() => handleReorder(item.id, "down")}
-                    disabled={index === sortedItems.length - 1}
-                  >
-                    <MoveDown className="h-3 w-3" />
-                  </Button>
-                </div>
-              </div>
-            </TableCell>
-            <TableCell className="font-medium">{item.name}</TableCell>
-            <TableCell>{item.description || "-"}</TableCell>
-            <TableCell>{item.location || "-"}</TableCell>
-            <TableCell>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onShowQR(item)}
-              >
-                <QrCode className="h-4 w-4" />
-              </Button>
-            </TableCell>
-            <TableCell>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="h-8 w-8 p-0">
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem>
-                    <Edit className="mr-2 h-4 w-4" />
-                    Edit
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    className="text-red-600"
-                    onClick={() => handleDelete(item.id)}
-                  >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Delete
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </TableCell>
+    <>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-[60px]">Order</TableHead>
+            <TableHead>Name</TableHead>
+            <TableHead>Description</TableHead>
+            <TableHead>Location</TableHead>
+            <TableHead>QR Code</TableHead>
+            <TableHead className="w-[120px]">Actions</TableHead>
           </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+        </TableHeader>
+        <TableBody>
+          {sortedItems.map((item, index) => (
+            <TableRow key={item.id}>
+              <TableCell>
+                <div className="flex items-center gap-1">
+                  <span className="text-sm font-medium">{item.order}</span>
+                  <div className="flex flex-col">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0"
+                      onClick={() => handleReorder(item.id, "up")}
+                      disabled={index === 0}
+                    >
+                      <MoveUp className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0"
+                      onClick={() => handleReorder(item.id, "down")}
+                      disabled={index === sortedItems.length - 1}
+                    >
+                      <MoveDown className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+              </TableCell>
+              <TableCell className="font-medium">{item.name}</TableCell>
+              <TableCell>{item.description || "-"}</TableCell>
+              <TableCell>{item.location || "-"}</TableCell>
+              <TableCell>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onShowQR(item)}
+                >
+                  <QrCode className="h-4 w-4" />
+                </Button>
+              </TableCell>
+              <TableCell>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="h-8 w-8 p-0">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => handleEdit(item)}>
+                      <Edit className="mr-2 h-4 w-4" />
+                      Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="text-red-600"
+                      onClick={() => handleDelete(item.id)}
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+
+      <EditTemplateItemDialog
+        open={showEditDialog}
+        onOpenChange={(open) => {
+          setShowEditDialog(open);
+          if (!open) setEditingItem(null);
+        }}
+        templateId={templateId}
+        item={editingItem}
+        onSuccess={() => {
+          fetchItems();
+          onUpdate();
+        }}
+        organizationId={organizationId}
+      />
+    </>
   );
 }
