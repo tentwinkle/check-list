@@ -196,9 +196,10 @@ export async function DELETE(
       );
     }
 
-    await prisma.masterTemplate.delete({
-      where: { id: params.id },
-    });
+    await prisma.$transaction([
+      prisma.inspectionInstance.deleteMany({ where: { masterTemplateId: params.id } }),
+      prisma.masterTemplate.delete({ where: { id: params.id } }),
+    ])
 
     await createAuditLog(
       session.user.id,
