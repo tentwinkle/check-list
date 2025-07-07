@@ -176,97 +176,99 @@ export function TemplateItemsList({
   const sortedItems = [...items].sort((a, b) => a.order - b.order);
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead className="w-[60px]">Order</TableHead>
-          <TableHead>Name</TableHead>
-          <TableHead>Description</TableHead>
-          <TableHead>Location</TableHead>
-          <TableHead>QR Code</TableHead>
-          <TableHead className="w-[120px]">Actions</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {sortedItems.map((item, index) => (
-          <TableRow key={item.id}>
-            <TableCell>
-              <div className="flex items-center gap-1">
-                <span className="text-sm font-medium">{item.order}</span>
-                <div className="flex flex-col">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 w-6 p-0"
-                    onClick={() => handleReorder(item.id, "up")}
-                    disabled={index === 0}
-                  >
-                    <MoveUp className="h-3 w-3" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 w-6 p-0"
-                    onClick={() => handleReorder(item.id, "down")}
-                    disabled={index === sortedItems.length - 1}
-                  >
-                    <MoveDown className="h-3 w-3" />
-                  </Button>
-                </div>
-              </div>
-            </TableCell>
-            <TableCell className="font-medium">{item.name}</TableCell>
-            <TableCell>{item.description || "-"}</TableCell>
-            <TableCell>{item.location || "-"}</TableCell>
-            <TableCell>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onShowQR(item)}
-              >
-                <QrCode className="h-4 w-4" />
-              </Button>
-            </TableCell>
-            <TableCell>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="h-8 w-8 p-0">
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => handleEdit(item)}>
-                    <Edit className="mr-2 h-4 w-4" />
-                    Edit
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    className="text-red-600"
-                    onClick={() => handleDelete(item.id)}
-                  >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Delete
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </TableCell>
+    <>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-[60px]">Order</TableHead>
+            <TableHead>Name</TableHead>
+            <TableHead>Description</TableHead>
+            <TableHead>Location</TableHead>
+            <TableHead>QR Code</TableHead>
+            <TableHead className="w-[120px]">Actions</TableHead>
           </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+        </TableHeader>
+        <TableBody>
+          {sortedItems.map((item, index) => (
+            <TableRow key={item.id}>
+              <TableCell>
+                <div className="flex items-center gap-1">
+                  <span className="text-sm font-medium">{item.order}</span>
+                  <div className="flex flex-col">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0"
+                      onClick={() => handleReorder(item.id, "up")}
+                      disabled={index === 0}
+                    >
+                      <MoveUp className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0"
+                      onClick={() => handleReorder(item.id, "down")}
+                      disabled={index === sortedItems.length - 1}
+                    >
+                      <MoveDown className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+              </TableCell>
+              <TableCell className="font-medium">{item.name}</TableCell>
+              <TableCell>{item.description || "-"}</TableCell>
+              <TableCell>{item.location || "-"}</TableCell>
+              <TableCell>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onShowQR(item)}
+                >
+                  <QrCode className="h-4 w-4" />
+                </Button>
+              </TableCell>
+              <TableCell>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="h-8 w-8 p-0">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => handleEdit(item)}>
+                      <Edit className="mr-2 h-4 w-4" />
+                      Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="text-red-600"
+                      onClick={() => handleDelete(item.id)}
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
 
-    <EditTemplateItemDialog
-      open={showEditDialog}
-      onOpenChange={(open) => {
-        setShowEditDialog(open);
-        if (!open) setEditingItem(null);
-      }}
-      templateId={templateId}
-      item={editingItem}
-      onSuccess={() => {
-        fetchItems();
-        onUpdate();
-      }}
-      organizationId={organizationId}
-    />
+      <EditTemplateItemDialog
+        open={showEditDialog}
+        onOpenChange={(open) => {
+          setShowEditDialog(open);
+          if (!open) setEditingItem(null);
+        }}
+        templateId={templateId}
+        item={editingItem}
+        onSuccess={() => {
+          fetchItems();
+          onUpdate();
+        }}
+        organizationId={organizationId}
+      />
+    </>
   );
 }
