@@ -25,6 +25,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
+import { EditTemplateItemDialog } from "./edit-template-item-dialog";
 
 interface TemplateItem {
   id: string;
@@ -52,6 +53,8 @@ export function TemplateItemsList({
 }: TemplateItemsListProps) {
   const [items, setItems] = useState<TemplateItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editingItem, setEditingItem] = useState<TemplateItem | null>(null);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -59,6 +62,7 @@ export function TemplateItemsList({
   }, [templateId, refreshKey]);
 
   const fetchItems = async () => {
+    setLoading(true);
     try {
       const response = await fetch(
         `/api/admin/template-items?templateId=${templateId}`
@@ -115,6 +119,11 @@ export function TemplateItemsList({
         variant: "destructive",
       });
     }
+  };
+
+  const handleEdit = (item: TemplateItem) => {
+    setEditingItem(item);
+    setShowEditDialog(true);
   };
 
   const handleDelete = async (itemId: string) => {
@@ -226,7 +235,7 @@ export function TemplateItemsList({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleEdit(item)}>
                     <Edit className="mr-2 h-4 w-4" />
                     Edit
                   </DropdownMenuItem>
@@ -244,5 +253,20 @@ export function TemplateItemsList({
         ))}
       </TableBody>
     </Table>
+
+    <EditTemplateItemDialog
+      open={showEditDialog}
+      onOpenChange={(open) => {
+        setShowEditDialog(open);
+        if (!open) setEditingItem(null);
+      }}
+      templateId={templateId}
+      item={editingItem}
+      onSuccess={() => {
+        fetchItems();
+        onUpdate();
+      }}
+      organizationId={organizationId}
+    />
   );
 }

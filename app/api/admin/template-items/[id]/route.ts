@@ -5,6 +5,58 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { extractOrganizationId } from "@/lib/admin";
 
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } },
+) {
+  try {
+    const session: Session | null = await getServerSession(authOptions);
+
+    if (!session || !["ADMIN", "SUPER_ADMIN"].includes(session.user.role)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { name, description, location } = await request.json();
+
+    const organizationId = extractOrganizationId(session, request);
+    const userDepartmentId = session.user.departmentId;
+
+    const existingItem = await prisma.checklistItem.findFirst({
+      where: {
+        id: params.id,
+        masterTemplate: {
+          organizationId,
+          ...(userDepartmentId ? { departmentId: userDepartmentId } : {}),
+        },
+      },
+    });
+
+    if (!existingItem) {
+      return NextResponse.json(
+        { error: "Template item not found" },
+        { status: 404 },
+      );
+    }
+
+    const updatedItem = await prisma.checklistItem.update({
+      where: { id: params.id },
+      data: {
+        name,
+        description,
+        location,
+      },
+    });
+
+    return NextResponse.json({ message: "Template item updated", item: updatedItem });
+  } catch (error) {
+    console.error("Error updating template item:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
+  }
+}
+
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } },
