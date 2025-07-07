@@ -1,5 +1,10 @@
 export function buildAdminApiUrl(path: string, organizationId?: string) {
-  return organizationId ? `${path}?organizationId=${organizationId}` : path;
+  if (!organizationId) {
+    return path;
+  }
+
+  const separator = path.includes("?") ? "&" : "?";
+  return `${path}${separator}organizationId=${organizationId}`;
 }
 
 export function extractOrganizationId(session: any, request: Request) {
