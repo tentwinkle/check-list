@@ -21,9 +21,12 @@ export function MiniAdminTemplateItemsManagement({ templateId, templateName, onU
   const [selectedItem, setSelectedItem] = useState<any>(null)
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(false)
+  const [loadingItems, setLoadingItems] = useState(true)
+  const [refreshKey, setRefreshKey] = useState(0)
   const { toast } = useToast()
 
   const fetchItems = async () => {
+    setLoadingItems(true)
     try {
       const response = await fetch(`/api/mini-admin/template-items?templateId=${templateId}`)
       if (response.ok) {
@@ -32,12 +35,14 @@ export function MiniAdminTemplateItemsManagement({ templateId, templateName, onU
       }
     } catch (error) {
       console.error("Failed to fetch items:", error)
+    } finally {
+      setLoadingItems(false)
     }
   }
 
   useEffect(() => {
     fetchItems()
-  }, [templateId])
+  }, [templateId, refreshKey])
 
   const handleDownloadAllQR = async () => {
     setLoading(true)
@@ -103,15 +108,19 @@ export function MiniAdminTemplateItemsManagement({ templateId, templateName, onU
           </div>
         </CardHeader>
         <CardContent className="overflow-auto">
-          <TemplateItemsList
-            templateId={templateId}
-            items={items}
-            onUpdate={() => {
-              fetchItems()
-              onUpdate()
-            }}
-            onShowQR={handleShowQR}
-          />
+          {loadingItems ? (
+            <div className="text-center py-4">Loading items...</div>
+          ) : (
+            <TemplateItemsList
+              templateId={templateId}
+              items={items}
+              onUpdate={() => {
+                setRefreshKey((k) => k + 1)
+                onUpdate()
+              }}
+              onShowQR={handleShowQR}
+            />
+          )}
         </CardContent>
       </Card>
 
@@ -120,7 +129,7 @@ export function MiniAdminTemplateItemsManagement({ templateId, templateName, onU
         onOpenChange={setShowCreateDialog}
         templateId={templateId}
         onSuccess={() => {
-          fetchItems()
+          setRefreshKey((k) => k + 1)
           onUpdate()
         }}
       />
