@@ -39,10 +39,10 @@ interface EditTemplateDialogProps {
   template: Template | null
   open: boolean
   onOpenChange: (open: boolean) => void
-  onTemplateUpdated: () => void
+  onSuccess: () => void
 }
 
-export function EditTemplateDialog({ template, open, onOpenChange, onTemplateUpdated }: EditTemplateDialogProps) {
+export function EditTemplateDialog({ template, open, onOpenChange, onSuccess }: EditTemplateDialogProps) {
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
   const [departmentId, setDepartmentId] = useState<string>("none")
@@ -95,7 +95,7 @@ export function EditTemplateDialog({ template, open, onOpenChange, onTemplateUpd
 
       if (response.ok) {
         toast.success("Template updated successfully")
-        onTemplateUpdated()
+        onSuccess()
         if (typeof window !== "undefined") {
           window.dispatchEvent(new Event("template-updated"))
         }
