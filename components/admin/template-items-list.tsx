@@ -67,6 +67,7 @@ export function TemplateItemsList({
   const [editingItem, setEditingItem] = useState<TemplateItem | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [loadingItem, setLoadingItem] = useState<string | null>(null);
+
   const { toast } = useToast();
 
   useEffect(() => {
