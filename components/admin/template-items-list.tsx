@@ -77,7 +77,7 @@ export function TemplateItemsList({
     setLoading(true);
     try {
       const response = await fetch(
-        `/api/admin/template-items?templateId=${templateId}`
+        buildAdminApiUrl(`/api/admin/template-items?templateId=${templateId}`, organizationId)
       );
       if (response.ok) {
         const data = await response.json();
@@ -104,7 +104,7 @@ export function TemplateItemsList({
   const handleReorder = async (itemId: string, direction: "up" | "down") => {
     try {
       const response = await fetch(
-        `/api/admin/template-items/${itemId}/reorder`, 
+        buildAdminApiUrl(`/api/admin/template-items/${itemId}/reorder`, organizationId),
         {
           method: "PUT",
           headers: {
@@ -141,7 +141,7 @@ export function TemplateItemsList({
   const handleDelete = async (itemId: string) => {
     try {
       const response = await fetch(
-        `/api/admin/template-items/${itemId}`, 
+        buildAdminApiUrl(`/api/admin/template-items/${itemId}`, organizationId),
         {
           method: "DELETE",
         }
