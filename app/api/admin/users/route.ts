@@ -65,6 +65,15 @@ export async function POST(request: NextRequest) {
 
     const { name, email, role, areaId, departmentId, password } = await request.json()
 
+    let newAreaId = areaId === "NONE" || areaId === "" ? null : areaId
+    let newDepartmentId = departmentId === "NONE" || departmentId === "" ? null : departmentId
+    if (role === "ADMIN") {
+      newAreaId = null
+      newDepartmentId = null
+    } else if (role === "MINI_ADMIN") {
+      newDepartmentId = null
+    }
+
     // Check if email already exists (case-insensitive)
     const existingUser = await prisma.user.findFirst({
       where: { email: { equals: email, mode: "insensitive" } },
@@ -75,10 +84,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify area and department belong to the organization
-    if (areaId && areaId !== "NONE" && areaId !== "") {
+    if (newAreaId) {
       const area = await prisma.area.findFirst({
         where: {
-          id: areaId,
+          id: newAreaId,
           organizationId,
         },
       })
@@ -88,10 +97,10 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    if (departmentId && departmentId !== "NONE" && departmentId !== "") {
+    if (newDepartmentId) {
       const department = await prisma.department.findFirst({
         where: {
-          id: departmentId,
+          id: newDepartmentId,
           organizationId,
         },
       })
@@ -122,8 +131,8 @@ export async function POST(request: NextRequest) {
           password: hashedPassword,
           role: role as any,
           organizationId,
-          areaId: areaId === "NONE" || areaId === "" ? null : areaId,
-          departmentId: departmentId === "NONE" || departmentId === "" ? null : departmentId,
+          areaId: newAreaId,
+          departmentId: newDepartmentId,
         },
       })
 
