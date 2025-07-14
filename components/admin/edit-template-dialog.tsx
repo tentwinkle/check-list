@@ -153,7 +153,7 @@ export function EditTemplateDialog({ template, open, onOpenChange, onSuccess, or
               </Label>
               <Select value={departmentId} onValueChange={setDepartmentId}>
                 <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Select department (optional)" />
+                  <SelectValue placeholder="Select department" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">No specific department</SelectItem>

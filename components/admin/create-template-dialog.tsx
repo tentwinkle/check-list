@@ -152,13 +152,13 @@ export function CreateTemplateDialog({ open, onOpenChange, onSuccess, organizati
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="department">Department (Optional)</Label>
+            <Label htmlFor="department">Department</Label>
             <Select
               value={formData.departmentId}
               onValueChange={(value) => setFormData({ ...formData, departmentId: value })}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select department (optional)" />
+                <SelectValue placeholder="Select department" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">No specific department</SelectItem>
