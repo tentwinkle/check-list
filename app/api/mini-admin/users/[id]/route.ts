@@ -24,6 +24,11 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
     const { name, email, role, departmentId, password } = await request.json()
 
+    let newDepartmentId = departmentId || null
+    if (role === "MINI_ADMIN") {
+      newDepartmentId = null
+    }
+
     // Verify user belongs to area
     const existingUser = await prisma.user.findFirst({
       where: {
@@ -51,10 +56,10 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     }
 
     // Verify department belongs to area if provided
-    if (departmentId) {
+    if (newDepartmentId) {
       const department = await prisma.department.findFirst({
         where: {
-          id: departmentId,
+          id: newDepartmentId,
           areaId,
         },
       })
@@ -81,7 +86,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       name,
       email,
       role: role as any,
-      departmentId: departmentId || null,
+      departmentId: newDepartmentId,
     }
 
     if (emailChanged) {
