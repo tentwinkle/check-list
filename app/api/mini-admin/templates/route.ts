@@ -65,7 +65,6 @@ export async function POST(request: NextRequest) {
 
     const areaId = session.user.areaId;
     const organizationId = session.user.organizationId;
-    const userDepartmentId = session.user.departmentId;
 
     if (!areaId || !organizationId) {
       return NextResponse.json(
