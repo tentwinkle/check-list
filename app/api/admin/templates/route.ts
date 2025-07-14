@@ -28,6 +28,7 @@ export async function GET(request: NextRequest) {
     const templates = await prisma.masterTemplate.findMany({
       where: {
         organizationId,
+        ...(userDepartmentId ? { departmentId: userDepartmentId } : {}),
       },
       include: {
         department: {
@@ -76,13 +77,41 @@ export async function POST(request: NextRequest) {
 
     const { name, description, frequency, departmentId } = await request.json();
 
+    const userDepartmentId = session.user.departmentId;
+    let finalDepartmentId: string | null = null;
+
+    if (userDepartmentId) {
+      if (departmentId && departmentId !== userDepartmentId) {
+        return NextResponse.json(
+          { error: "Invalid department" },
+          { status: 400 },
+        );
+      }
+      finalDepartmentId = userDepartmentId;
+    } else if (departmentId && departmentId !== "none" && departmentId !== "") {
+      const department = await prisma.department.findFirst({
+        where: {
+          id: departmentId,
+          organizationId,
+        },
+      });
+
+      if (!department) {
+        return NextResponse.json(
+          { error: "Invalid department" },
+          { status: 400 },
+        );
+      }
+      finalDepartmentId = departmentId;
+    }
+
     const template = await prisma.masterTemplate.create({
       data: {
         name,
         description,
         frequency,
         organizationId,
-        departmentId
+        departmentId: finalDepartmentId,
       },
     });
 

@@ -65,6 +65,7 @@ export async function POST(request: NextRequest) {
 
     const areaId = session.user.areaId;
     const organizationId = session.user.organizationId;
+    const userDepartmentId = session.user.departmentId;
 
     if (!areaId || !organizationId) {
       return NextResponse.json(
@@ -75,13 +76,40 @@ export async function POST(request: NextRequest) {
 
     const { name, description, frequency, departmentId } = await request.json();
 
+    let finalDepartmentId: string | null = null;
+
+    if (userDepartmentId) {
+      if (departmentId && departmentId !== userDepartmentId) {
+        return NextResponse.json(
+          { error: "Invalid department" },
+          { status: 400 },
+        );
+      }
+      finalDepartmentId = userDepartmentId;
+    } else if (departmentId) {
+      const department = await prisma.department.findFirst({
+        where: {
+          id: departmentId,
+          areaId,
+        },
+      });
+
+      if (!department) {
+        return NextResponse.json(
+          { error: "Invalid department" },
+          { status: 400 },
+        );
+      }
+      finalDepartmentId = departmentId;
+    }
+
     const template = await prisma.masterTemplate.create({
       data: {
         name,
         description,
         frequency,
         organizationId,
-        departmentId
+        departmentId: finalDepartmentId,
       },
     });
 
