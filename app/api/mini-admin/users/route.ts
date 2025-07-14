@@ -60,6 +60,11 @@ export async function POST(request: NextRequest) {
 
     const { name, email, role, departmentId, password } = await request.json()
 
+    let newDepartmentId = departmentId || null
+    if (role === "MINI_ADMIN") {
+      newDepartmentId = null
+    }
+
     // Check if email already exists (case-insensitive)
     const existingUser = await prisma.user.findFirst({
       where: { email: { equals: email, mode: "insensitive" } },
@@ -70,10 +75,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify department belongs to the area
-    if (departmentId) {
+    if (newDepartmentId) {
       const department = await prisma.department.findFirst({
         where: {
-          id: departmentId,
+          id: newDepartmentId,
           areaId,
         },
       })
@@ -105,7 +110,7 @@ export async function POST(request: NextRequest) {
           role: role as any,
           organizationId,
           areaId,
-          departmentId: departmentId || null,
+          departmentId: newDepartmentId,
         },
       })
 

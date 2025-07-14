@@ -25,6 +25,16 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
     const { name, email, role, areaId, departmentId, password } = await request.json()
 
+    // Determine new area/department based on role
+    let newAreaId = areaId === "NONE" ? null : areaId
+    let newDepartmentId = departmentId === "NONE" ? null : departmentId
+    if (role === "ADMIN") {
+      newAreaId = null
+      newDepartmentId = null
+    } else if (role === "MINI_ADMIN") {
+      newDepartmentId = null
+    }
+
     // Verify user belongs to organization
     const existingUser = await prisma.user.findFirst({
       where: {
@@ -52,10 +62,10 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     }
 
     // Verify area and department belong to organization
-    if (areaId && areaId !== "NONE") {
+    if (newAreaId) {
       const area = await prisma.area.findFirst({
         where: {
-          id: areaId,
+          id: newAreaId,
           organizationId,
         },
       })
@@ -65,10 +75,10 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       }
     }
 
-    if (departmentId && departmentId !== "NONE") {
+    if (newDepartmentId) {
       const department = await prisma.department.findFirst({
         where: {
-          id: departmentId,
+          id: newDepartmentId,
           organizationId,
         },
       })
@@ -95,8 +105,8 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       name,
       email,
       role: role as any,
-      areaId: areaId === "NONE" ? null : areaId,
-      departmentId: departmentId === "NONE" ? null : departmentId,
+      areaId: newAreaId,
+      departmentId: newDepartmentId,
     }
     if (emailChanged) {
       updateData.password = null
