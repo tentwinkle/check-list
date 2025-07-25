@@ -100,6 +100,23 @@ export function InspectionsList() {
       });
     }
 
+    const statusPriority: Record<string, number> = {
+      IN_PROGRESS: 0,
+      PENDING: 1,
+      OVERDUE: 2,
+      COMPLETED: 3,
+    };
+
+    filtered.sort((a, b) => {
+      const statusDiff =
+        statusPriority[a.status as keyof typeof statusPriority] -
+        statusPriority[b.status as keyof typeof statusPriority];
+      if (statusDiff !== 0) return statusDiff;
+      return (
+        new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
+      );
+    });
+
     setFilteredInspections(filtered);
   };
 
