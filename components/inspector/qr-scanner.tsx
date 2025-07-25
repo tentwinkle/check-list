@@ -21,6 +21,7 @@ export function QRScanner({ open, onClose }: QRScannerProps) {
   const [showManualInput, setShowManualInput] = useState(false)
   const [manualCode, setManualCode] = useState("")
   const [errorMsg, setErrorMsg] = useState("")
+  const [hasScanned, setHasScanned] = useState(false)
   const { toast } = useToast()
   const router = useRouter()
 
@@ -33,6 +34,8 @@ export function QRScanner({ open, onClose }: QRScannerProps) {
   }, [open])
 
   const handleQRCodeFound = async (qrCodeId: string) => {
+    if (hasScanned) return
+    setHasScanned(true)
     try {
       const response = await fetch(`/api/inspector/qr-scan/${qrCodeId}`)
 
@@ -73,6 +76,7 @@ export function QRScanner({ open, onClose }: QRScannerProps) {
     setManualCode("")
     setShowManualInput(false)
     setErrorMsg("")
+    setHasScanned(false)
     onClose()
   }
 
